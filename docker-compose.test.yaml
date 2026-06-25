@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    ports:
+      - "8080:8080"
+    volumes:
+      # 開発中にnginx.confを変更した場合に即時反映させるための設定
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      # Nuxtのビルド出力ディレクトリをマウント
+      - ./.output/public:/usr/share/nginx/html
+    environment:
+      - NODE_ENV=development
+    # コンテナが異常終了した場合に自動的に再起動
+    restart: unless-stopped
+    # ヘルスチェックの設定
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

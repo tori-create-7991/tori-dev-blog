@@ -1,0 +1,10 @@
+export const useFormatDate = () => {
+  const formatDate = (date: string): string => {
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' }
+    return new Date(date).toLocaleDateString('ja-JP', options)
+  }
+
+  return {
+    formatDate
+  }
+}

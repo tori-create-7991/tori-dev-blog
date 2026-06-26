@@ -21,6 +21,7 @@ export default defineContentConfig({
           .object({
             qiita: z.boolean().optional(),
             zenn: z.boolean().optional(),
+            note: z.boolean().optional(),
             devto: z.boolean().optional(),
           })
           .optional(),
@@ -30,6 +31,8 @@ export default defineContentConfig({
         zenn_slug: z.string().nullable().optional(),
         zenn_emoji: z.string().optional(),
         zenn_type: z.enum(['tech', 'idea']).optional(),
+        note_url: z.string().nullable().optional(),
+        note_id: z.string().nullable().optional(),
         private: z.boolean().optional(),
         topics: z.array(z.string()).optional(),
       }),

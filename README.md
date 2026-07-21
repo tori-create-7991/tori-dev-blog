@@ -23,6 +23,7 @@
 - **Search**: fuse.js
 - **CMS 統合**: Notion API (`notion-to-md`), Google Drive (`googleapis`)
 - **Hosting**: Firebase Hosting（SSG）+ Cloud Functions（フォーム受口、Phase 2 以降）
+- **Infra as Code**: Terraform（`terraform/`）— Firebase Hosting サイト + WIF/IAM。詳細は [`docs/design/terraform-firebase-hosting-migration.md`](docs/design/terraform-firebase-hosting-migration.md) と [`docs/runbook/terraform-deploy.md`](docs/runbook/terraform-deploy.md)
 - **Cross-post**: [tori-create-7991/article-relay](https://github.com/tori-create-7991/article-relay) — Qiita / Zenn にブログ記事をクロスポストする CLI
 
 ## ライセンス
@@ -85,8 +86,9 @@ npm run cross -- ../tori-dev-blog/content/posts/<slug>.md
 | Phase | 内容 | Status |
 |---|---|---|
 | 1 | `/advisory` ページ + article-relay 連携 frontmatter | ✓ |
+| 1.5 | Terraform / Firebase Hosting 移植（コード・runbook 準備まで。実際の apply/デプロイはユーザー実行） | ✓ |
 | 2 | `/tweets`（つぶやき集約 / x-times-relay 連携）+ ニュースレター + Works タブ | 検討中 |
-| 3 | デザイン刷新 + Works / About 全面リニューアル + `/contact` API + Terraform 化 | 検討中 |
+| 3 | デザイン刷新 + Works / About 全面リニューアル + `/contact` API + content-sync/eyecatch 移植 | 検討中 |
 
 ## 関連プロジェクト
 

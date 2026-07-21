@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "tori-develop"
+  },
+  "targets": {
+    "tori-develop": {
+      "hosting": {
+        "blog": [
+          "tori-develop-blog"
+        ]
+      }
+    }
+  }
+}

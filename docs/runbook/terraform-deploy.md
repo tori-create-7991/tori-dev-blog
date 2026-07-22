@@ -58,7 +58,8 @@ bash scripts/setup_gcp.sh
 - Service Account `github-actions-tori-blog`
 - 必要な IAM ロール付与
 
-スクリプト完了時に以下の値が出力される。GitHub Secrets に設定する:
+スクリプト完了時、`gh` CLI がログイン済み・対象リポジトリへの admin
+権限があれば以下の Secret を **自動登録**する（`gh secret set`）:
 
 | GitHub Secret | 値 |
 |---|---|
@@ -66,7 +67,16 @@ bash scripts/setup_gcp.sh
 | `GCP_SA_EMAIL` | スクリプト出力の `sa_email` |
 | `GCP_PROJECT_ID` | `tori-develop` |
 | `GCP_TF_STATE_BUCKET` | 手順1で確認したバケット名 |
+
+`gh` 未検出・未認証の場合は登録コマンド例を標準出力するので、手動で実行する。
+
+以下は自動登録の対象外（別途手動で設定）:
+
+| GitHub Secret | 値 |
+|---|---|
 | `DOTENV` | ブログの `.env` 相当の中身（Notion/Google 連携が必要な場合のみ） |
+| `CLOUDFLARE_API_TOKEN` | カスタムドメイン使用時のみ（未使用ならダミー値で terraform apply 可） |
+| `CLOUDFLARE_ZONE_ID` | カスタムドメイン使用時のみ |
 
 GitHub Variables（`vars`）:
 

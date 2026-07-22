@@ -470,20 +470,55 @@ SA_EMAIL_OUTPUT=$(terraform output -raw sa_email 2>/dev/null || echo "$SA_EMAIL"
 
 cd "$REPO_ROOT"
 
+# -------------------------------------------------------------------
+# 12. GitHub Secrets 登録 (gh CLI があれば自動、無ければ手動手順を表示)
+# -------------------------------------------------------------------
 echo ""
 echo "==================================================="
 echo "   セットアップ完了!"
 echo "==================================================="
 echo ""
-echo "GitHub Repository Secrets に以下を設定してください:"
+
+declare -A GH_SECRETS=(
+  [GCP_PROJECT_ID]="$PROJECT_ID"
+  [GCP_TF_STATE_BUCKET]="$BUCKET_NAME"
+  [WIF_PROVIDER]="$WIF_PROVIDER_FULL"
+  [GCP_SA_EMAIL]="$SA_EMAIL_OUTPUT"
+)
+if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+  GH_SECRETS[CLOUDFLARE_API_TOKEN]="$CLOUDFLARE_API_TOKEN"
+fi
+if [ -n "$CLOUDFLARE_ZONE_ID" ]; then
+  GH_SECRETS[CLOUDFLARE_ZONE_ID]="$CLOUDFLARE_ZONE_ID"
+fi
+
+if command -v gh &>/dev/null && gh auth status &>/dev/null; then
+  echo "gh CLI 検出 → GitHub Secrets を自動登録..."
+  for key in "${!GH_SECRETS[@]}"; do
+    if gh secret set "$key" --repo "$GH_REPO" --body "${GH_SECRETS[$key]}" &>/dev/null; then
+      echo "  [set] $key ✓"
+    else
+      echo "  [ERROR] $key の登録に失敗しました（--repo $GH_REPO への admin 権限を確認）"
+    fi
+  done
+  echo ""
+  echo "Cloudflare 用 Secret は、カスタムドメインを使う場合のみ手動で追加してください:"
+  echo "  gh secret set CLOUDFLARE_API_TOKEN --repo $GH_REPO --body \"<token>\""
+  echo "  gh secret set CLOUDFLARE_ZONE_ID --repo $GH_REPO --body \"<zone_id>\""
+else
+  echo "[WARN] gh CLI 未検出 or 未認証 → 手動で GitHub Repository Secrets に設定してください:"
+  echo ""
+  for key in "${!GH_SECRETS[@]}"; do
+    echo "  $key : ${GH_SECRETS[$key]}"
+  done
+  echo ""
+  echo "gh CLI を使う場合の一括登録コマンド例:"
+  for key in "${!GH_SECRETS[@]}"; do
+    echo "  gh secret set $key --repo $GH_REPO --body \"${GH_SECRETS[$key]}\""
+  done
+fi
+
 echo ""
-echo "  GCP_PROJECT_ID       : $PROJECT_ID"
-echo "  GCP_TF_STATE_BUCKET  : $BUCKET_NAME"
-echo "  WIF_PROVIDER         : $WIF_PROVIDER_FULL"
-echo "  GCP_SA_EMAIL         : $SA_EMAIL_OUTPUT"
-echo "  CLOUDFLARE_API_TOKEN : (入力済みのトークン)"
-echo "  CLOUDFLARE_ZONE_ID   : $CLOUDFLARE_ZONE_ID"
-echo ""
-echo "以降は GitHub Actions (push to main/tori-dev) で"
+echo "以降は GitHub Actions (push to main) で"
 echo "terraform apply が自動実行されます。"
 echo ""

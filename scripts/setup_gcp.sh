@@ -21,10 +21,15 @@ set -e
 #   export CLOUDFLARE_ZONE_ID="xxx"    # 省略時はCloudflare API から自動導出
 #   export SECRET_PROJECT="tori-dev-secrets"              # Cloudflareトークン保管先GCPプロジェクト
 #   export CLOUDFLARE_DNS_TOKEN_SECRET="cloudflare-tori-dev-dns-token"  # secret名
+#   export SECRET_ACCOUNT="user@example.org"  # $PROJECT_ID用アカウントと
+#     # $SECRET_PROJECT用アカウントが別テナントで組織ポリシー上IAM共有
+#     # できない場合、Secret Manager読み取りだけこのアカウントで実行する
+#     # （gcloud config の active account は変更しない）
 #
 # CUSTOM_DOMAIN設定時、CLOUDFLARE_API_TOKENは
 #   gcloud secrets versions access latest \
-#     --secret=cloudflare-tori-dev-dns-token --project=tori-dev-secrets
+#     --secret=cloudflare-tori-dev-dns-token --project=tori-dev-secrets \
+#     [--account=$SECRET_ACCOUNT]
 # で自動取得する（実行アカウントに secretmanager.secretAccessor 権限が必要）。
 # ===================================================================
 
@@ -141,21 +146,36 @@ fi
 # secret: cloudflare-tori-dev-dns-token) から自動取得する。
 # CLOUDFLARE_ZONE_ID はトークンで Cloudflare API を叩いて自動導出する
 # （zone_id自体は非秘匿情報のためSecret化不要）。
+#
+# $SECRET_PROJECT (tori-dev-secrets) は組織 tori-create.org 配下、
+# メインの $PROJECT_ID (tori-develop) は別テナントのアカウントが持つ場合が
+# あり、組織ポリシーでアカウント間のIAM共有ができないことがある。
+# その場合は SECRET_ACCOUNT に tori-dev-secrets へアクセスできるアカウント
+# を指定すれば、そのコマンドだけ --account で切り替えて取得する
+# （gcloud config の active account はグローバルに変更しない）。
 SECRET_PROJECT="${SECRET_PROJECT:-tori-dev-secrets}"
 CLOUDFLARE_DNS_TOKEN_SECRET="${CLOUDFLARE_DNS_TOKEN_SECRET:-cloudflare-tori-dev-dns-token}"
+SECRET_ACCOUNT_ARGS=()
+if [ -n "$SECRET_ACCOUNT" ]; then
+  SECRET_ACCOUNT_ARGS=(--account="$SECRET_ACCOUNT")
+fi
 
 if [ -n "$CUSTOM_DOMAIN" ]; then
   if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
     echo "  Cloudflare API Token を GCP Secret Manager から取得中..."
     echo "    project: $SECRET_PROJECT / secret: $CLOUDFLARE_DNS_TOKEN_SECRET"
+    if [ -n "$SECRET_ACCOUNT" ]; then
+      echo "    account : $SECRET_ACCOUNT"
+    fi
     if CLOUDFLARE_API_TOKEN=$(gcloud secrets versions access latest \
         --secret="$CLOUDFLARE_DNS_TOKEN_SECRET" \
-        --project="$SECRET_PROJECT" 2>/dev/null) && [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+        --project="$SECRET_PROJECT" \
+        "${SECRET_ACCOUNT_ARGS[@]}" 2>/dev/null) && [ -n "$CLOUDFLARE_API_TOKEN" ]; then
       echo "  Cloudflare API Token 取得 ✓"
     else
       echo "  [WARN] Secret Manager から取得できませんでした"
       echo "    （$SECRET_PROJECT への secretmanager.secretAccessor 権限、"
-      echo "    または secret 名を確認してください）"
+      echo "    secret 名、または SECRET_ACCOUNT の指定を確認してください）"
       read -rp "Cloudflare API Token (手動入力): " CLOUDFLARE_API_TOKEN
     fi
   fi

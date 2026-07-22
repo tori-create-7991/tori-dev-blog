@@ -18,6 +18,11 @@
   （組織 `tori-create.org` / 請求先 `tori-dev`）の secret
   `cloudflare-tori-dev-dns-token` への `secretmanager.secretAccessor` 権限
   （`cloudflare-tori-dev-deploy-token` は現構成では未使用）
+  - `tori-develop`（本体プロジェクト）と `tori-dev-secrets` の権限アカウントが
+    異なるテナントの場合、組織ポリシーでIAMをアカウント間共有できないことが
+    ある。その場合は両アカウントを個別に `gcloud auth login` しておき、
+    `SECRET_ACCOUNT` 環境変数で `tori-dev-secrets` 側アカウントを指定する
+    （下記手順2参照）
 
 ## 手順
 
@@ -49,6 +54,8 @@ bash scripts/setup_gcp.sh
 ```bash
 export PROJECT_ID="tori-develop"
 export GH_REPO="tori-create-7991/tori-dev-blog"
+# tori-develop と tori-dev-secrets の権限アカウントが別テナントの場合のみ:
+# export SECRET_ACCOUNT="tori-develop側とは別の、tori-dev-secretsにアクセスできるアカウント"
 # カスタムドメインは今回のスコープ外のため空のままでよい
 # export CUSTOM_DOMAIN=""
 bash scripts/setup_gcp.sh

@@ -14,6 +14,10 @@
 - `terraform` CLI インストール済み
 - GitHub リポジトリ `tori-create-7991/tori-dev-blog` への admin 権限
   （Secrets/Variables 設定のため）
+- カスタムドメイン設定時のみ: GCP project `tori-dev-secrets`
+  （組織 `tori-create.org` / 請求先 `tori-dev`）の secret
+  `cloudflare-tori-dev-dns-token` への `secretmanager.secretAccessor` 権限
+  （`cloudflare-tori-dev-deploy-token` は現構成では未使用）
 
 ## 手順
 
@@ -67,16 +71,24 @@ bash scripts/setup_gcp.sh
 | `GCP_SA_EMAIL` | スクリプト出力の `sa_email` |
 | `GCP_PROJECT_ID` | `tori-develop` |
 | `GCP_TF_STATE_BUCKET` | 手順1で確認したバケット名 |
+| `CLOUDFLARE_API_TOKEN` | `CUSTOM_DOMAIN` 設定時のみ。GCP Secret Manager (project `tori-dev-secrets`, secret `cloudflare-tori-dev-dns-token`) から自動取得 |
+| `CLOUDFLARE_ZONE_ID` | `CUSTOM_DOMAIN` 設定時のみ。取得したトークンで Cloudflare API を叩いて自動導出 |
 
 `gh` 未検出・未認証の場合は登録コマンド例を標準出力するので、手動で実行する。
+`CLOUDFLARE_API_TOKEN` の Secret Manager 取得に失敗した場合（権限不足・secret名不一致）は手動入力にフォールバックする。
+
+`cloudflare-tori-dev-deploy-token` は現構成では未使用（配線しない）。
+**TODO（将来検討）**: Cloudflare Pages/Workers 等、DNS操作を伴わないデプロイ系
+タスクを追加する際に使う想定で残置。使う段になったら、このスクリプトの
+`CLOUDFLARE_DNS_TOKEN_SECRET` と同様に別変数（例:
+`CLOUDFLARE_DEPLOY_TOKEN_SECRET`）で `gcloud secrets versions access` させ、
+用途に応じた最小権限の GitHub Secret として登録する。
 
 以下は自動登録の対象外（別途手動で設定）:
 
 | GitHub Secret | 値 |
 |---|---|
 | `DOTENV` | ブログの `.env` 相当の中身（Notion/Google 連携が必要な場合のみ） |
-| `CLOUDFLARE_API_TOKEN` | カスタムドメイン使用時のみ（未使用ならダミー値で terraform apply 可） |
-| `CLOUDFLARE_ZONE_ID` | カスタムドメイン使用時のみ |
 
 GitHub Variables（`vars`）:
 

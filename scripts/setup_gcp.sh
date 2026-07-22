@@ -16,9 +16,16 @@ set -e
 # 環境変数で事前設定も可能:
 #   export PROJECT_ID="my-project"
 #   export GH_REPO="user/repo"
-#   export CLOUDFLARE_API_TOKEN="xxx"
-#   export CLOUDFLARE_ZONE_ID="xxx"
 #   export CUSTOM_DOMAIN="blog.example.com"  # 省略可
+#   export CLOUDFLARE_API_TOKEN="xxx"  # 省略時はGCP Secret Managerから自動取得
+#   export CLOUDFLARE_ZONE_ID="xxx"    # 省略時はCloudflare API から自動導出
+#   export SECRET_PROJECT="tori-dev-secrets"              # Cloudflareトークン保管先GCPプロジェクト
+#   export CLOUDFLARE_DNS_TOKEN_SECRET="cloudflare-tori-dev-dns-token"  # secret名
+#
+# CUSTOM_DOMAIN設定時、CLOUDFLARE_API_TOKENは
+#   gcloud secrets versions access latest \
+#     --secret=cloudflare-tori-dev-dns-token --project=tori-dev-secrets
+# で自動取得する（実行アカウントに secretmanager.secretAccessor 権限が必要）。
 # ===================================================================
 
 REGION="asia-northeast1"
@@ -130,12 +137,42 @@ if [ -z "$CUSTOM_DOMAIN" ]; then
 fi
 
 # Cloudflare はカスタムドメイン使用時のみ必須
+# CLOUDFLARE_API_TOKEN は GCP Secret Manager (project: $SECRET_PROJECT,
+# secret: cloudflare-tori-dev-dns-token) から自動取得する。
+# CLOUDFLARE_ZONE_ID はトークンで Cloudflare API を叩いて自動導出する
+# （zone_id自体は非秘匿情報のためSecret化不要）。
+SECRET_PROJECT="${SECRET_PROJECT:-tori-dev-secrets}"
+CLOUDFLARE_DNS_TOKEN_SECRET="${CLOUDFLARE_DNS_TOKEN_SECRET:-cloudflare-tori-dev-dns-token}"
+
 if [ -n "$CUSTOM_DOMAIN" ]; then
   if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-    read -rp "Cloudflare API Token: " CLOUDFLARE_API_TOKEN
+    echo "  Cloudflare API Token を GCP Secret Manager から取得中..."
+    echo "    project: $SECRET_PROJECT / secret: $CLOUDFLARE_DNS_TOKEN_SECRET"
+    if CLOUDFLARE_API_TOKEN=$(gcloud secrets versions access latest \
+        --secret="$CLOUDFLARE_DNS_TOKEN_SECRET" \
+        --project="$SECRET_PROJECT" 2>/dev/null) && [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+      echo "  Cloudflare API Token 取得 ✓"
+    else
+      echo "  [WARN] Secret Manager から取得できませんでした"
+      echo "    （$SECRET_PROJECT への secretmanager.secretAccessor 権限、"
+      echo "    または secret 名を確認してください）"
+      read -rp "Cloudflare API Token (手動入力): " CLOUDFLARE_API_TOKEN
+    fi
   fi
-  if [ -z "$CLOUDFLARE_ZONE_ID" ]; then
-    read -rp "Cloudflare Zone ID: " CLOUDFLARE_ZONE_ID
+
+  if [ -z "$CLOUDFLARE_ZONE_ID" ] && [ -n "$CLOUDFLARE_API_TOKEN" ]; then
+    ZONE_APEX=$(echo "$CUSTOM_DOMAIN" | grep -oE '[^.]+\.[^.]+$')
+    echo "  Cloudflare Zone ID を自動導出中... (zone: $ZONE_APEX)"
+    ZONE_LOOKUP=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones?name=${ZONE_APEX}" \
+      -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+      -H "Content-Type: application/json")
+    CLOUDFLARE_ZONE_ID=$(echo "$ZONE_LOOKUP" | grep -o '"id":"[^"]*"' | head -1 | cut -d'"' -f4)
+    if [ -n "$CLOUDFLARE_ZONE_ID" ]; then
+      echo "  Cloudflare Zone ID 取得 ✓ ($CLOUDFLARE_ZONE_ID)"
+    else
+      echo "  [WARN] Zone ID の自動導出に失敗しました（トークンの権限 or ドメイン名を確認）"
+      read -rp "Cloudflare Zone ID (手動入力): " CLOUDFLARE_ZONE_ID
+    fi
   fi
 else
   CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:-}"

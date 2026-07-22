@@ -4,6 +4,19 @@
 リソース作成・GitHub Secrets 設定・DNS 変更は **GCP・Cloudflare の認証情報を
 保有するユーザー自身が実行する**。以下の手順に沿って進める。
 
+> **既知の実インシデント（2026-07-22）**: `terraform/providers.tf` の GCS
+> backend prefix が当初 `terraform/blog` という汎用名だったため、同一 GCS
+> バケット（`tori-develop-tfstate`）を共有していた旧 Nuxt3 ブログリポジトリ
+> （`012_nuxt-07_nuxt3_toriblog`、`tori-dev.com` 本番運用中）の state と衝突。
+> `terraform apply` が旧リポジトリの稼働中リソース（Service Account の
+> project-level IAMロール9個、WIF Provider、Artifact Registry）を「別名への
+> リネーム」と誤認識し、破壊 → 再作成した。手動でIAMロール再付与・WIF
+> Provider undelete・Artifact Registry再作成（中身のDockerイメージは復元
+> 不可）で復旧。再発防止として prefix を `terraform/tori-dev-blog` に変更
+> 済み（[terraform/providers.tf](../../terraform/providers.tf)）。
+> **同一GCPプロジェクトを複数リポジトリで共有する場合、GCS state prefixに
+> リポジトリ名をフルで含めること。「terraform/blog」のような汎用名は禁止。**
+
 関連: `docs/design/terraform-firebase-hosting-migration.md`,
 `docs/adr/0001-reuse-gcp-project-new-hosting-site.md`
 

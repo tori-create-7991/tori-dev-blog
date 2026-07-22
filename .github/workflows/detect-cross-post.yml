@@ -1,0 +1,53 @@
+name: Detect cross-post targets
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "content/posts/*.md"
+
+jobs:
+  detect-and-dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: List changed post files
+        id: changed
+        run: |
+          FILES=$(git diff --name-only HEAD~1 HEAD -- 'content/posts/*.md' || true)
+          echo "files<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$FILES" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch cross-post for each changed file with cross_post enabled
+        env:
+          DISPATCH_TOKEN: ${{ secrets.ARTICLE_RELAY_DISPATCH_TOKEN }}
+        run: |
+          if [ -z "${{ steps.changed.outputs.files }}" ]; then
+            echo "変更された記事なし。スキップ。"
+            exit 0
+          fi
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            [ -f "$file" ] || continue
+
+            # frontmatter に cross_post: qiita/zenn true があるか簡易チェック
+            if ! grep -qE '^\s*(qiita|zenn):\s*true' "$file"; then
+              echo "スキップ（cross_post未設定）: $file"
+              continue
+            fi
+
+            echo "dispatch対象: $file"
+            CONTENT_B64=$(base64 -w0 "$file" 2>/dev/null || base64 "$file" | tr -d '\n')
+
+            curl -sf -X POST \
+              -H "Authorization: Bearer ${DISPATCH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              https://api.github.com/repos/tori-create-7991/article-relay/dispatches \
+              -d "{\"event_type\":\"cross-post\",\"client_payload\":{\"file_path\":\"${file}\",\"content\":\"${CONTENT_B64}\",\"repo\":\"${{ github.repository }}\",\"sha\":\"${{ github.sha }}\"}}" \
+              || echo "dispatch失敗: $file"
+          done <<< "${{ steps.changed.outputs.files }}"

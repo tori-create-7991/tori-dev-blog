@@ -9,7 +9,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "get-drive": "NODE_OPTIONS='--loader ts-node/esm' node scripts/getGoogleDrive.ts",
-    "get-notion": "NODE_OPTIONS='--loader ts-node/esm' node scripts/getNotiontoMd.ts"
+    "get-notion": "NODE_OPTIONS='--loader ts-node/esm' node scripts/getNotiontoMd.ts",
+    "get-tweets": "NODE_OPTIONS='--loader ts-node/esm' node scripts/getTweetsFromNotion.ts"
   },
   "dependencies": {
     "@nuxt/content": "^3.4.0",

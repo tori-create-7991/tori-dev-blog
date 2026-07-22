@@ -536,23 +536,25 @@ echo "   セットアップ完了!"
 echo "==================================================="
 echo ""
 
-declare -A GH_SECRETS=(
-  [GCP_PROJECT_ID]="$PROJECT_ID"
-  [GCP_TF_STATE_BUCKET]="$BUCKET_NAME"
-  [WIF_PROVIDER]="$WIF_PROVIDER_FULL"
-  [GCP_SA_EMAIL]="$SA_EMAIL_OUTPUT"
-)
+# macOS標準の/bin/bashはGPLライセンス問題で3.2固定（連想配列非対応）。
+# `declare -A`はbash4+限定なので、並列インデックス配列で代替する。
+GH_SECRET_KEYS=(GCP_PROJECT_ID GCP_TF_STATE_BUCKET WIF_PROVIDER GCP_SA_EMAIL)
+GH_SECRET_VALUES=("$PROJECT_ID" "$BUCKET_NAME" "$WIF_PROVIDER_FULL" "$SA_EMAIL_OUTPUT")
 if [ -n "$CLOUDFLARE_API_TOKEN" ]; then
-  GH_SECRETS[CLOUDFLARE_API_TOKEN]="$CLOUDFLARE_API_TOKEN"
+  GH_SECRET_KEYS+=(CLOUDFLARE_API_TOKEN)
+  GH_SECRET_VALUES+=("$CLOUDFLARE_API_TOKEN")
 fi
 if [ -n "$CLOUDFLARE_ZONE_ID" ]; then
-  GH_SECRETS[CLOUDFLARE_ZONE_ID]="$CLOUDFLARE_ZONE_ID"
+  GH_SECRET_KEYS+=(CLOUDFLARE_ZONE_ID)
+  GH_SECRET_VALUES+=("$CLOUDFLARE_ZONE_ID")
 fi
 
 if command -v gh &>/dev/null && gh auth status &>/dev/null; then
   echo "gh CLI 検出 → GitHub Secrets を自動登録..."
-  for key in "${!GH_SECRETS[@]}"; do
-    if gh secret set "$key" --repo "$GH_REPO" --body "${GH_SECRETS[$key]}" &>/dev/null; then
+  for i in "${!GH_SECRET_KEYS[@]}"; do
+    key="${GH_SECRET_KEYS[$i]}"
+    value="${GH_SECRET_VALUES[$i]}"
+    if gh secret set "$key" --repo "$GH_REPO" --body "$value" &>/dev/null; then
       echo "  [set] $key ✓"
     else
       echo "  [ERROR] $key の登録に失敗しました（--repo $GH_REPO への admin 権限を確認）"
@@ -565,13 +567,13 @@ if command -v gh &>/dev/null && gh auth status &>/dev/null; then
 else
   echo "[WARN] gh CLI 未検出 or 未認証 → 手動で GitHub Repository Secrets に設定してください:"
   echo ""
-  for key in "${!GH_SECRETS[@]}"; do
-    echo "  $key : ${GH_SECRETS[$key]}"
+  for i in "${!GH_SECRET_KEYS[@]}"; do
+    echo "  ${GH_SECRET_KEYS[$i]} : ${GH_SECRET_VALUES[$i]}"
   done
   echo ""
   echo "gh CLI を使う場合の一括登録コマンド例:"
-  for key in "${!GH_SECRETS[@]}"; do
-    echo "  gh secret set $key --repo $GH_REPO --body \"${GH_SECRETS[$key]}\""
+  for i in "${!GH_SECRET_KEYS[@]}"; do
+    echo "  gh secret set ${GH_SECRET_KEYS[$i]} --repo $GH_REPO --body \"${GH_SECRET_VALUES[$i]}\""
   done
 fi
 

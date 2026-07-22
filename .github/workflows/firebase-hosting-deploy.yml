@@ -1,0 +1,93 @@
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  REGION: asia-northeast1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # terraform apply -auto-approve が無条件で本番GCPリソースを変更する。
+    # state衝突で他リポジトリの本番リソースを誤破壊した実インシデントの
+    # 教訓により、GitHub Environments の required reviewers で apply前に
+    # 人の承認を挟む。Environment "production" 自体と reviewer 設定は
+    # リポジトリ管理者がGitHub UI(Settings > Environments)で作成する必要
+    # がある（ワークフローYAML単体では承認ゲートは有効化されない）。
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # WIF認証
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      # Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: terraform init -backend-config="bucket=${{ secrets.GCP_TF_STATE_BUCKET }}"
+
+      - name: Terraform Apply
+        working-directory: terraform
+        run: |
+          terraform apply -auto-approve -input=false \
+            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -var="github_repo=${{ github.repository }}" \
+            -var="firebase_site_suffix=${{ vars.FIREBASE_SITE_SUFFIX || 'blog' }}" \
+            -var="cloudrun_service_name=${{ vars.CLOUDRUN_SERVICE_NAME || 'tori-dev-blog' }}" \
+            -var="custom_domain=${{ vars.CUSTOM_DOMAIN || '' }}" \
+            -var="cloudflare_api_token=${{ secrets.CLOUDFLARE_API_TOKEN || 'dummy_not_used_without_custom_domain_pad' }}" \
+            -var="cloudflare_zone_id=${{ secrets.CLOUDFLARE_ZONE_ID || '' }}"
+
+      # Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      # .envファイル作成
+      - name: Create .env file
+        run: echo "${{ secrets.DOTENV }}" > .env
+
+      # 依存関係インストール
+      - name: Install dependencies
+        run: npm ci
+
+      # コンテンツ同期（失敗してもビルドは続行）
+      - name: Content sync
+        run: npm run content-sync || echo "Content sync skipped"
+
+      # eyecatch画像生成（失敗してもビルドは続行）
+      - name: Generate eyecatch images
+        run: npm run generate-eyecatch || echo "Eyecatch generation skipped"
+
+      # SSGビルド
+      - name: Generate static site
+        run: npm run generate
+
+      # Firebase Hosting デプロイ
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy to Firebase Hosting
+        run: |
+          PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          SITE_SUFFIX="${{ vars.FIREBASE_SITE_SUFFIX || 'blog' }}"
+          firebase target:apply hosting blog "${PROJECT_ID}-${SITE_SUFFIX}" --project "${PROJECT_ID}"
+          firebase deploy --only hosting:blog --project "${PROJECT_ID}"

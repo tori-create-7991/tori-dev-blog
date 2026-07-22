@@ -42,7 +42,7 @@
 ### 1. GCS backend 用バケットの確認・作成
 
 Terraform state を保存する GCS バケットが必要（`terraform/providers.tf` の
-`backend "gcs" { prefix = "terraform/blog" }`）。
+`backend "gcs" { prefix = "terraform/tori-dev-blog" }`）。
 
 ```bash
 # 既存バケットがあるか確認（旧 012_nuxt-07_nuxt3_toriblog の tori-dev ブランチ
@@ -117,6 +117,21 @@ GitHub Variables（`vars`）:
 | `FIREBASE_SITE_SUFFIX` | `blog`（デフォルトのため省略可） | site_id = `tori-develop-blog` |
 | `CLOUDRUN_SERVICE_NAME` | `tori-dev-blog`（デフォルトのため省略可） | 未使用（`deploy_target=firebase`） |
 | `CUSTOM_DOMAIN` | 空のまま（このタスクのスコープ外） | 設定するとカスタムドメイン紐付けが Terraform で走るため要注意 |
+
+### 2.5. GitHub Environment（承認ゲート）の設定
+
+`.github/workflows/firebase-hosting-deploy.yml` の `deploy` job は
+`environment: production` を参照する。`main` への push だけで
+`terraform apply -auto-approve` が本番GCPリソースを変更してしまうため
+（過去に state 衝突で他リポジトリの本番リソースを誤破壊したインシデントの
+教訓）、reviewer 承認を挟みたい場合は以下を GitHub の Web UI で設定する
+（ワークフローYAML単体では有効化されない）:
+
+1. リポジトリ `Settings > Environments > New environment` で `production` を作成
+2. `Required reviewers` にレビュー担当者を追加
+3. 必要に応じて `Deployment branches` を `main` のみに制限
+
+設定しない場合、承認なしで即 apply される（現状の挙動と同じ）。
 
 ### 3. GitHub Actions を実行
 

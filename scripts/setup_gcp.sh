@@ -567,13 +567,31 @@ if command -v gh &>/dev/null && gh auth status &>/dev/null; then
 else
   echo "[WARN] gh CLI 未検出 or 未認証 → 手動で GitHub Repository Secrets に設定してください:"
   echo ""
+  # トークン等の秘匿値はターミナルのスクロールバック/録画/ログ経由の漏洩を
+  # 避けるため、画面には値を出さずキー名のみ列挙する。
   for i in "${!GH_SECRET_KEYS[@]}"; do
-    echo "  ${GH_SECRET_KEYS[$i]} : ${GH_SECRET_VALUES[$i]}"
+    key="${GH_SECRET_KEYS[$i]}"
+    case "$key" in
+      *TOKEN*|*SECRET*|*KEY*)
+        echo "  $key : (値は非表示。Secret Manager or 手元の控えから設定)"
+        ;;
+      *)
+        echo "  $key : ${GH_SECRET_VALUES[$i]}"
+        ;;
+    esac
   done
   echo ""
-  echo "gh CLI を使う場合の一括登録コマンド例:"
+  echo "gh CLI を使う場合の一括登録コマンド例（トークン系は <value> をプレースホルダのまま表示、コピペ時に置き換えてください）:"
   for i in "${!GH_SECRET_KEYS[@]}"; do
-    echo "  gh secret set ${GH_SECRET_KEYS[$i]} --repo $GH_REPO --body \"${GH_SECRET_VALUES[$i]}\""
+    key="${GH_SECRET_KEYS[$i]}"
+    case "$key" in
+      *TOKEN*|*SECRET*|*KEY*)
+        echo "  gh secret set $key --repo $GH_REPO --body \"<value>\""
+        ;;
+      *)
+        echo "  gh secret set $key --repo $GH_REPO --body \"${GH_SECRET_VALUES[$i]}\""
+        ;;
+    esac
   done
 fi
 

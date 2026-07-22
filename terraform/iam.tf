@@ -15,12 +15,30 @@ locals {
     "roles/artifactregistry.admin",
     "roles/iam.serviceAccountUser",
     "roles/serviceusage.serviceUsageAdmin",
-    "roles/storage.admin",
-    # 以下3つはCI terraform apply がIAM/WIF/SAリソースを管理するために必要
+    # 以下3つはCI自身がこのterraform configでIAM/WIF/SAリソースを
+    # 管理(自己ブートストラップ)するために必要。project全体スコープの
+    # 強い権限だが、CIが自分のSA/WIF Providerを作成・更新する設計自体が
+    # これを要求する。将来的にはIAM/WIFの初期構築を人手のbootstrapに
+    # 分離しCIからは剥がすことを検討する。
     "roles/resourcemanager.projectIamAdmin",
     "roles/iam.workloadIdentityPoolAdmin",
     "roles/iam.serviceAccountAdmin",
   ]
+}
+
+# tfstate用GCSバケットはsetup_gcp.shが事前作成する（terraform管理外）。
+# storage.adminをproject全体に与えるとCIがproject内の無関係な全バケットを
+# 操作できてしまうため、tfstateバケットへのアクセスだけをresource-level
+# IAMで許可する（過去にstate衝突で他リポジトリのリソースを破壊した
+# インシデントの再発防止と同じ理由で、権限は必要最小限に絞る）。
+data "google_storage_bucket" "tfstate" {
+  name = "${var.project_id}-tfstate"
+}
+
+resource "google_storage_bucket_iam_member" "github_actions_tfstate" {
+  bucket = data.google_storage_bucket.tfstate.name
+  role   = "roles/storage.admin"
+  member = "serviceAccount:${google_service_account.github_actions.email}"
 }
 
 # このリポジトリ専用のOIDC Provider（Pool内でID一意にする）

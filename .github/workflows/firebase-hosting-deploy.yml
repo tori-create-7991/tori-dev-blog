@@ -12,6 +12,13 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # terraform apply -auto-approve が無条件で本番GCPリソースを変更する。
+    # state衝突で他リポジトリの本番リソースを誤破壊した実インシデントの
+    # 教訓により、GitHub Environments の required reviewers で apply前に
+    # 人の承認を挟む。Environment "production" 自体と reviewer 設定は
+    # リポジトリ管理者がGitHub UI(Settings > Environments)で作成する必要
+    # がある（ワークフローYAML単体では承認ゲートは有効化されない）。
+    environment: production
     permissions:
       contents: read
       id-token: write

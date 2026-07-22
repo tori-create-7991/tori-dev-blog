@@ -15,6 +15,7 @@
 | `/sidecontent/about` | プロフィール |
 | `/sidecontent/contact` | お問い合わせ |
 | `/sidecontent/policy` | プライバシーポリシー |
+| `/tweets` | X / Bluesky / Threads への投稿ログ（text-sns-relay 連携） |
 
 ## 技術スタック
 
@@ -41,11 +42,16 @@ cp .env.example .env  # 必要に応じて作成
 npm install
 ```
 
-`scripts/getNotiontoMd.ts` / `scripts/getGoogleDrive.ts` を使う場合は以下の環境変数を `.env` に設定:
+各種コンテンツ取り込みスクリプトを使う場合は以下の環境変数を `.env` に設定:
 
 ```
-NOTION_TOKEN=
+# 記事取り込み（scripts/getNotiontoMd.ts）
+NOTION_API_KEY=
+NOTION_DATABASE_ID=
+# Google Drive 取り込み（scripts/getGoogleDrive.ts）
 GOOGLE_APPLICATION_CREDENTIALS=
+# つぶやき取り込み（scripts/getTweetsFromNotion.ts、text-sns-relay連携）
+NOTION_TWEETS_DB_ID=641e0e88-38b8-466a-98e4-d53aa4bd9432
 ```
 
 ### 開発サーバ
@@ -67,11 +73,12 @@ npm run generate
 ```bash
 npm run get-notion   # Notion DB → content/posts/*.md
 npm run get-drive    # Google Drive → public/images/
+npm run get-tweets   # Notion「つぶやきログ」DB → content/tweets/*.md
 ```
 
-### 記事クロスポスト
+### 記事クロスポスト（article-relay）
 
-別リポ `article-relay` から:
+別リポ `article-relay` から手動実行、または push 時に自動実行（下記参照）:
 
 ```bash
 cd ../article-relay
@@ -80,20 +87,48 @@ npm run cross -- ../tori-dev-blog/content/posts/<slug>.md
 
 `content/posts/*.md` の frontmatter で `cross_post: { qiita: true, zenn: true }` を立てた記事だけが対象。
 
+## リポジトリ間連携（疎結合、docs/design/cross-repo-loose-coupling.md 参照）
+
+tori-dev-blog / article-relay / text-sns-relay はそれぞれ単独動作可能な
+独立リポジトリ。以下の2つの連携は「実行時トリガー」「共有データストア」の
+形でのみ疎通し、コードレベルの依存は持たない。
+
+### 1. blog → article-relay（自動クロスポスト）
+
+`.github/workflows/detect-cross-post.yml` が `content/posts/*.md` の変更を
+検知し、`cross_post` フラグが立った記事を GitHub の `repository_dispatch`
+で article-relay に送信。article-relay 側の
+`.github/workflows/cross-post-dispatch.yml` が受け取って `npm run cross` を
+実行する。
+
+必要な GitHub Secret（本リポジトリ側）:
+
+| Secret | 用途 |
+|---|---|
+| `ARTICLE_RELAY_DISPATCH_TOKEN` | article-relay への `repository_dispatch` 送信用 Fine-grained PAT（`actions:write` のみ） |
+
+### 2. text-sns-relay → blog（`/tweets` ページ）
+
+text-sns-relay が投稿成功時に Notion DB「つぶやきログ」へ書き込み、blog が
+ビルド時に `npm run get-tweets` で取得して `/tweets` ページに反映する
+（ADR 0003）。両リポジトリとも同じ `NOTION_TOKEN` / DB ID を使用。
+
 ## 開発フェーズ
 
 | Phase | 内容 | Status |
 |---|---|---|
 | 1 | `/advisory` ページ + article-relay 連携 frontmatter | ✓ |
-| 2 | `/tweets`（つぶやき集約 / x-times-relay 連携）+ ニュースレター + Works タブ | 検討中 |
-| 3 | デザイン刷新 + Works / About 全面リニューアル + `/contact` API + Terraform 化 | 検討中 |
+| 1.5 | Terraform / Firebase Hosting 移植（コード・runbook 準備まで） | ✓（PR待ち） |
+| 2 | `/tweets`（text-sns-relay 連携）+ cross-repo自動連携（Notion経由） | ✓ |
+| 2.5 | ニュースレター + Works タブ | 検討中 |
+| 3 | デザイン刷新 + Works / About 全面リニューアル + `/contact` API | 検討中 |
 
 ## 関連プロジェクト
 
 | リポ | 役割 |
 |---|---|
 | [article-relay](https://github.com/tori-create-7991/article-relay) | 本ブログ記事を Qiita / Zenn にクロスポスト |
-| [x-times-relay](https://github.com/tori-create-7991/x-times-relay) | X 投稿を Slack / Discord に転送（つぶやき導線） |
+| [text-sns-relay](https://github.com/tori-create-7991/text-sns-relay) | X / Bluesky / Threads へ投稿、Slack / Discord 通知（つぶやき導線） |
 | [bonsaidev](https://github.com/tori-create-7991/bonsaidev) | 自律エージェント FW |
 | [whv-compass](https://github.com/tori-create-7991/whv-compass) | AI 相談 SaaS（豪 WHV 向け） |
 

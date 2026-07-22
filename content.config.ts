@@ -58,6 +58,20 @@ export default defineContentConfig({
       source: 'sidecontent/*.md',
       type: 'page',
     }),
+    // text-sns-relay の送信履歴（Notion経由、docs/adr/0003参照）
+    tweets: defineCollection({
+      source: 'tweets/*.md',
+      type: 'page',
+      schema: z.object({
+        title: z.string(),
+        text: z.string(),
+        postedAt: z.date(),
+        platforms: z.array(z.string()),
+        urlX: z.string().optional(),
+        urlBluesky: z.string().optional(),
+        urlThreads: z.string().optional(),
+      }),
+    }),
 
   }
 })

@@ -26,6 +26,10 @@ export const sidebarItem = [
     title: "顧問サービス",
     to: "/advisory",
   },
+  {
+    title: "つぶやき",
+    to: "/tweets",
+  },
 ];
 
 export const footerItem = [

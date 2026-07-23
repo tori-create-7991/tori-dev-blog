@@ -23,6 +23,14 @@ export const sidebarItem = [
     to: "/sidecontent/about",
   },
   {
+    title: "Works",
+    to: "/works",
+  },
+  {
+    title: "Blog",
+    to: "/posts",
+  },
+  {
     title: "顧問サービス",
     to: "/advisory",
   },

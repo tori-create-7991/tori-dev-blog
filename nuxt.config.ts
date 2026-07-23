@@ -96,6 +96,13 @@ export default defineNuxtConfig({
         '@pinia/nuxt',
     ],
 
+    // minimalスタイルはライト前提のデザイントークンのため、OSのダークモード設定に
+    // 追従させずライト固定にする
+    colorMode: {
+        preference: 'light',
+        fallback: 'light',
+    },
+
     image: {
     //     provider: 'ipxStatic',
     //     ipxStatic: {

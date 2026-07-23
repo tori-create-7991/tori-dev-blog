@@ -549,6 +549,20 @@ if [ -n "$CLOUDFLARE_ZONE_ID" ]; then
   GH_SECRET_VALUES+=("$CLOUDFLARE_ZONE_ID")
 fi
 
+# GitHub Variables（非秘匿値）。CUSTOM_DOMAINだけは特に重要:
+# CIの terraform apply は vars.CUSTOM_DOMAIN が未登録だと空文字にフォール
+# バックし、custom_domain != "" を条件にしたDNSレコード/カスタムドメイン
+# リソースを「不要」と判定してdestroyする（実インシデント: このVariables
+# 登録漏れで一度、稼働中のpreview.tori-dev.comのDNSレコードとFirebase
+# カスタムドメインが誤destroyされた）。Secretsだけでなく必ずこちらも
+# 自動登録する。
+GH_VAR_KEYS=(FIREBASE_SITE_SUFFIX CLOUDRUN_SERVICE_NAME)
+GH_VAR_VALUES=(blog tori-dev-blog)
+if [ -n "$CUSTOM_DOMAIN" ]; then
+  GH_VAR_KEYS+=(CUSTOM_DOMAIN)
+  GH_VAR_VALUES+=("$CUSTOM_DOMAIN")
+fi
+
 if command -v gh &>/dev/null && gh auth status &>/dev/null; then
   echo "gh CLI 検出 → GitHub Secrets を自動登録..."
   for i in "${!GH_SECRET_KEYS[@]}"; do
@@ -564,6 +578,23 @@ if command -v gh &>/dev/null && gh auth status &>/dev/null; then
   echo "Cloudflare 用 Secret は、カスタムドメインを使う場合のみ手動で追加してください:"
   echo "  gh secret set CLOUDFLARE_API_TOKEN --repo $GH_REPO --body \"<token>\""
   echo "  gh secret set CLOUDFLARE_ZONE_ID --repo $GH_REPO --body \"<zone_id>\""
+  echo ""
+  echo "GitHub Variables を自動登録..."
+  for i in "${!GH_VAR_KEYS[@]}"; do
+    key="${GH_VAR_KEYS[$i]}"
+    value="${GH_VAR_VALUES[$i]}"
+    if gh variable set "$key" --repo "$GH_REPO" --body "$value" &>/dev/null; then
+      echo "  [set] $key = $value ✓"
+    else
+      echo "  [ERROR] $key の登録に失敗しました（--repo $GH_REPO への admin 権限を確認）"
+    fi
+  done
+  if [ -z "$CUSTOM_DOMAIN" ]; then
+    echo "  [WARN] CUSTOM_DOMAIN は空のため未登録。カスタムドメインを使う"
+    echo "    リソース(DNSレコード/Firebaseカスタムドメイン)は作成されない"
+    echo "    設計のため問題ない。後で設定する場合:"
+    echo "    gh variable set CUSTOM_DOMAIN --repo $GH_REPO --body \"<domain>\""
+  fi
 else
   echo "[WARN] gh CLI 未検出 or 未認証 → 手動で GitHub Repository Secrets に設定してください:"
   echo ""
@@ -592,6 +623,12 @@ else
         echo "  gh secret set $key --repo $GH_REPO --body \"${GH_SECRET_VALUES[$i]}\""
         ;;
     esac
+  done
+  echo ""
+  echo "GitHub Variables も手動で設定してください（CUSTOM_DOMAIN未登録だと"
+  echo "CIのterraform applyがDNSレコード/カスタムドメインをdestroyします）:"
+  for i in "${!GH_VAR_KEYS[@]}"; do
+    echo "  gh variable set ${GH_VAR_KEYS[$i]} --repo $GH_REPO --body \"${GH_VAR_VALUES[$i]}\""
   done
 fi
 

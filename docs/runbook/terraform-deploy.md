@@ -17,6 +17,22 @@
 > **同一GCPプロジェクトを複数リポジトリで共有する場合、GCS state prefixに
 > リポジトリ名をフルで含めること。「terraform/blog」のような汎用名は禁止。**
 
+> **既知の実インシデント（2026-07-23）**: PR #1 マージ後、CIが初回
+> `terraform apply` を実行した際、GitHub Variable `CUSTOM_DOMAIN` が
+> 未登録だったため `vars.CUSTOM_DOMAIN || ''` が空文字にフォールバック。
+> `custom_domain != "" ? 1 : 0` を条件にした `cloudflare_record` /
+> `google_firebase_hosting_custom_domain` が「不要」と判定され、稼働中の
+> `preview.tori-dev.com` の DNS レコード・カスタムドメインが destroy
+> された（`setup_gcp.sh` は GitHub **Secrets** だけ自動登録し、
+> **Variables** は手動設定の想定のまま実際には登録し忘れていた）。
+> `gh variable set CUSTOM_DOMAIN` で登録後、ワークフロー再実行で復旧。
+> 再発防止として `setup_gcp.sh` が `FIREBASE_SITE_SUFFIX` /
+> `CLOUDRUN_SERVICE_NAME` / `CUSTOM_DOMAIN` の GitHub Variables も
+> Secrets と同様に自動登録するようにした。
+> **Secrets と Variables は別画面・別APIなので、片方だけ自動化して
+> 「初期構築完了」と判断しないこと。特に空文字がデフォルト値として
+> 安全に倒れない（=リソースが消える方向に倒れる）変数は要注意。**
+
 関連: `docs/design/terraform-firebase-hosting-migration.md`,
 `docs/adr/0001-reuse-gcp-project-new-hosting-site.md`
 
@@ -110,13 +126,13 @@ bash scripts/setup_gcp.sh
 |---|---|
 | `DOTENV` | ブログの `.env` 相当の中身（Notion/Google 連携が必要な場合のみ） |
 
-GitHub Variables（`vars`）:
+GitHub Variables（`vars`）— `setup_gcp.sh` が Secrets と同様に自動登録する:
 
 | Variable | 値 | 備考 |
 |---|---|---|
-| `FIREBASE_SITE_SUFFIX` | `blog`（デフォルトのため省略可） | site_id = `tori-develop-blog` |
-| `CLOUDRUN_SERVICE_NAME` | `tori-dev-blog`（デフォルトのため省略可） | 未使用（`deploy_target=firebase`） |
-| `CUSTOM_DOMAIN` | 空のまま（このタスクのスコープ外） | 設定するとカスタムドメイン紐付けが Terraform で走るため要注意 |
+| `FIREBASE_SITE_SUFFIX` | `blog` | site_id = `tori-develop-blog` |
+| `CLOUDRUN_SERVICE_NAME` | `tori-dev-blog` | 未使用（`deploy_target=firebase`） |
+| `CUSTOM_DOMAIN` | `setup_gcp.sh` 実行時の `$CUSTOM_DOMAIN` 環境変数の値 | **空のまま実行すると登録されない**。この状態で `main` が push されると CI は `custom_domain=""` で apply し、DNSレコード/カスタムドメインを destroy する（上記2026-07-23インシデント参照）。カスタムドメイン運用時は必ず `CUSTOM_DOMAIN` を設定してから `setup_gcp.sh` を実行すること |
 
 ### 2.5. GitHub Environment（承認ゲート）の設定
 

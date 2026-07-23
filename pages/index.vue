@@ -2,14 +2,12 @@
     <div>
         <home />
         <div v-if="announcementsFlag"><HomeNews /></div>
-        <!-- <article-search /> -->
         <ContentSearch />
     </div>
 </template>
 
 <script setup>
 import Home from '../components/Home.vue'
-// import ArticleSearch from '../components/ArticleSearch.vue'
 import ContentSearch from '../components/ContentSearch.vue'
 import HomeNews from '~/components/HomeNews.vue'
 import { announcementsFlag } from '../siteConfig'

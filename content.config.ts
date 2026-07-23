@@ -58,6 +58,22 @@ export default defineContentConfig({
       source: 'sidecontent/*.md',
       type: 'page',
     }),
+    works: defineCollection({
+      source: 'works/*.md',
+      type: 'page',
+      schema: z.object({
+        title: z.string(),
+        description: z.string(),
+        category: z.enum(['ax-dx', 'training', 'development']),
+        date: z.date(),
+        technologies: z.array(z.string()).optional(),
+        role: z.string().optional(),
+        duration: z.string().optional(),
+        links: z
+          .array(z.object({ text: z.string(), url: z.string() }))
+          .optional(),
+      }),
+    }),
 
   }
 })

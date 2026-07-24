@@ -36,7 +36,8 @@ export default defineNuxtConfig({
             failOnError: false,
             routes: [
                 ...sidebarItem.map(item => item.to),
-                ...footerItem.map(item => item.to)
+                ...footerItem.map(item => item.to),
+                '/sitemap.xml'
             ]
         },
 
@@ -151,6 +152,12 @@ export default defineNuxtConfig({
 
     dir: {
         public: process.env.NODE_ENV === 'production' ? 'public' : 'public_dev'
+    },
+
+    runtimeConfig: {
+        public: {
+            siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://tori-dev.com',
+        },
     },
 
 

@@ -201,6 +201,17 @@ useHead({
     ],
 })
 
+// AEO: 構造化データ
+const { articleJsonLd, breadcrumbJsonLd, injectJsonLd } = useStructuredData()
+injectJsonLd(articleJsonLd(post.value))
+injectJsonLd(
+    breadcrumbJsonLd([
+        { name: 'Top', path: '/' },
+        { name: 'Blog', path: '/posts' },
+        { name: post.value?.title, path: route.path },
+    ])
+)
+
 // 画面サイズに応じて目次の表示状態を制御
 onMounted(() => {
     // デスクトップ表示時は目次を表示

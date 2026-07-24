@@ -61,4 +61,15 @@ useHead({
     { hid: 'og:title', property: 'og:title', content: work.value?.title },
   ],
 })
+
+// AEO: 構造化データ
+const { creativeWorkJsonLd, breadcrumbJsonLd, injectJsonLd } = useStructuredData()
+injectJsonLd(creativeWorkJsonLd(work.value))
+injectJsonLd(
+  breadcrumbJsonLd([
+    { name: 'Top', path: '/' },
+    { name: 'Works', path: '/works' },
+    { name: work.value?.title, path: route.path },
+  ])
+)
 </script>

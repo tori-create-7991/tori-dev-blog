@@ -28,6 +28,8 @@
                 <button
                     class="md:hidden p-2 text-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700 rounded-md"
                     :aria-label="mobileMenuOpen ? 'メニューを閉じる' : 'メニューを開く'"
+                    :aria-expanded="mobileMenuOpen"
+                    aria-controls="mobile-menu"
                     @click="mobileMenuOpen = !mobileMenuOpen"
                 >
                     <svg v-if="!mobileMenuOpen" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -40,7 +42,7 @@
             </div>
         </div>
 
-        <div v-if="mobileMenuOpen" class="md:hidden border-t border-gray-200 bg-white">
+        <div id="mobile-menu" v-if="mobileMenuOpen" class="md:hidden border-t border-gray-200 bg-white">
             <nav class="flex flex-col gap-1 p-4">
                 <NuxtLink
                     v-for="item in navItems"

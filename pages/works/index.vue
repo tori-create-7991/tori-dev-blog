@@ -18,19 +18,15 @@
 </template>
 
 <script setup>
+import { workCategories } from '~/siteConfig'
+
 const { data: works } = await useAsyncData('works-index', () => {
   return queryCollection('works').order('date', 'DESC').all()
 })
 
-const categoryOrder = [
-  { key: 'ax-dx', label: 'AX・DX' },
-  { key: 'training', label: '研修' },
-  { key: 'development', label: '開発' },
-]
-
 const groupedWorks = computed(() => {
   const items = works.value || []
-  return categoryOrder
+  return workCategories
     .map((c) => ({
       ...c,
       items: items.filter((w) => w.category === c.key),

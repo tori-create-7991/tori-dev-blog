@@ -34,6 +34,8 @@
 </template>
 
 <script setup>
+import { workCategoryLabel } from '~/siteConfig'
+
 const route = useRoute()
 
 const { data: work } = await useAsyncData(route.path, () => {
@@ -47,18 +49,13 @@ if (!work.value) {
   })
 }
 
-const categoryLabels = {
-  'ax-dx': 'AX・DX',
-  training: '研修',
-  development: '開発',
-}
-const categoryLabel = computed(() => categoryLabels[work.value?.category] || work.value?.category)
+const categoryLabel = computed(() => workCategoryLabel(work.value?.category))
 
 useHead({
   title: work.value?.title,
   meta: [
-    { hid: 'description', name: 'description', content: work.value?.description },
-    { hid: 'og:title', property: 'og:title', content: work.value?.title },
+    { key: 'description', name: 'description', content: work.value?.description },
+    { key: 'og:title', property: 'og:title', content: work.value?.title },
   ],
 })
 

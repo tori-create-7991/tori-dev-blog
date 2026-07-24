@@ -1,14 +1,12 @@
 <template>
   <div class="mx-auto max-w-screen-xl px-4 py-10">
     <h1 class="font-display text-2xl font-bold text-gray-900 mb-8">Blog</h1>
-    <ArticleList :articles="posts" />
+    <ContentSearch />
   </div>
 </template>
 
 <script setup>
-const { data: posts } = await useAsyncData('posts-index', () => {
-  return queryCollection('posts').order('date', 'DESC').all()
-})
+import ContentSearch from '~/components/ContentSearch.vue'
 
 useHead({
   title: 'Blog | tori-dev',

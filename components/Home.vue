@@ -68,7 +68,7 @@
 </template>
 
 <script setup>
-import { siteConfig } from '~/siteConfig'
+import { siteConfig, workCategoryLabel } from '~/siteConfig'
 import ArticleList from '~/components/ArticleList.vue'
 
 const heroImage = '/default.jpg'
@@ -83,10 +83,5 @@ const { data: posts } = await useAsyncData('home-posts', () => {
 })
 const latestPosts = computed(() => posts.value || [])
 
-const categoryLabels = {
-  'ax-dx': 'AX・DX',
-  training: '研修',
-  development: '開発',
-}
-const categoryLabel = (category) => categoryLabels[category] || category
+const categoryLabel = workCategoryLabel
 </script>

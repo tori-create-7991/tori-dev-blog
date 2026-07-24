@@ -4,7 +4,7 @@
         <div v-if="!isTocVisible">
             <button
                 @click="isTocVisible = !isTocVisible"
-                class="fixed right-4 top-15 bg-white text-gray-600 px-3 py-1.5 rounded-md shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors duration-200"
+                class="fixed right-4 top-20 bg-white text-gray-600 px-3 py-1.5 rounded-md shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors duration-200"
             >
                 <div class="flex items-center">
                     <svg
@@ -28,124 +28,50 @@
         <!-- メインコンテンツ -->
         <article
             :class="[
-                'mx-0 lg:mx-auto lg:max-w-screen-2xl lg:w-full',
+                'mx-0 lg:mx-auto lg:max-w-screen-md lg:w-full px-4 py-8',
                 isTocVisible ? 'lg:pr-72' : ''
             ]"
         >
             <div>
-                <h1
-                    class="text-2xl font-bold text-center py-4 px-12 mb-4 text-white bg-blue-600 rounded-full"
-                >
+                <h1 class="font-display text-2xl sm:text-3xl font-bold text-gray-900">
                     {{ post?.title }}
                 </h1>
-                <div class="bg-blue-50 text-center">
-                    <NuxtImg
-                        v-if="post?.image"
-                        :src="post.image"
-                        class="w-full h-72 object-contain"
-                        :placeholder="[50, 25, 75, 5]"
-                        loading="lazy"
-                        :alt="post.title"
-                    />
-                    <NuxtImg
-                        v-else
-                        :src="defaultImage"
-                        class="w-full h-72 object-contain"
-                        :placeholder="[50, 25, 75, 5]"
-                        loading="lazy"
-                        alt="Default article image"
-                    />
+                <NuxtImg
+                    v-if="post?.image"
+                    :src="post.image"
+                    class="w-full h-72 object-contain mt-6 rounded-lg bg-gray-50"
+                    :placeholder="[50, 25, 75, 5]"
+                    loading="lazy"
+                    :alt="post.title"
+                />
+                <div class="flex flex-wrap items-center gap-3 mt-4 text-sm text-gray-500">
+                    <time>{{ formatDate(post?.date) }}</time>
+                    <UBadge
+                        v-for="tag in post?.tags"
+                        :key="tag"
+                        color="neutral"
+                        variant="subtle"
+                        class="cursor-pointer"
+                        @click="moveTag(tag)"
+                    >
+                        {{ tag }}
+                    </UBadge>
                 </div>
-                <div class="flex flex-col space-y-2 my-4">
-                    <div class="flex items-center ml-3">
-                        <span class="font-medium">Created Day :</span>
-                        <div class="ml-2">{{ formatDate(post?.date) }}</div>
-                    </div>
-                    <div v-if="post?.updateDate" class="flex items-center ml-3">
-                        <span class="font-medium">Update Day :</span>
-                        <div class="ml-2">
-                            {{ formatDate(post.updateDate) }}
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap gap-2 ml-3">
-                        <span
-                            v-for="tag in post?.tags"
-                            :key="tag"
-                            @click="moveTag(tag)"
-                            class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer"
-                        >
-                            {{ tag }}
-                        </span>
-                    </div>
+                <div class="prose max-w-none mt-8">
+                    <ContentRenderer :value="post" />
                 </div>
-                <div>
-                    <div class="w-full text-base">
-                        <ContentRenderer :value="post" />
-                    </div>
-                    <div v-if="post?.advertisements" class="mt-12">
-                        <p class="text-gray-600">広告を表示しています</p>
-                        <div
-                            v-for="n in post.advertisements"
-                            :key="n"
-                            v-html="n"
-                            class="mt-4"
-                        ></div>
-                    </div>
-                    <div v-if="categoryPost" class="mt-20 mb-20">
-                        <div
-                            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4"
-                        >
-                            <div
-                                v-for="n in categoryPost"
-                                :key="n.slug"
-                                class="bg-white rounded-lg shadow-md overflow-hidden"
-                            >
-                                <div class="p-4">
-                                    <NuxtLink :to="n.path" class="block">
-                                        <NuxtImg
-                                            v-if="n.image"
-                                            :src="n.image"
-                                            class="w-full h-48 object-cover rounded"
-                                            :placeholder="[50, 25, 75, 5]"
-                                            loading="lazy"
-                                            :alt="n.title"
-                                        />
-                                        <NuxtImg
-                                            v-else
-                                            :src="defaultImage"
-                                            class="w-full h-48 object-cover rounded"
-                                            :placeholder="[50, 25, 75, 5]"
-                                            loading="lazy"
-                                            alt="Default article image"
-                                        />
-                                    </NuxtLink>
-                                    <h3 class="mt-4 text-lg font-semibold">
-                                        <NuxtLink
-                                            :to="n.path"
-                                            class="text-blue-600 hover:text-blue-800"
-                                        >
-                                            {{ n.title }}
-                                        </NuxtLink>
-                                    </h3>
-                                    <div class="mt-4 flex items-center">
-                                        <div class="text-gray-600">
-                                            {{ formatDate(n.date) }}
-                                        </div>
-                                        <div class="ml-4 flex flex-wrap gap-2">
-                                            <span
-                                                v-for="tag in n.tags"
-                                                :key="tag"
-                                                @click="moveTag(tag)"
-                                                class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer"
-                                            >
-                                                {{ tag }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div v-if="post?.advertisements" class="mt-12">
+                    <p class="text-gray-600">広告を表示しています</p>
+                    <div
+                        v-for="n in post.advertisements"
+                        :key="n"
+                        v-html="n"
+                        class="mt-4"
+                    ></div>
+                </div>
+                <div v-if="categoryPost?.length" class="mt-16 mb-16">
+                    <h2 class="font-display text-lg font-semibold text-gray-900 mb-4">関連記事</h2>
+                    <ArticleList :articles="categoryPost" />
                 </div>
             </div>
         </article>
@@ -186,7 +112,7 @@
                     <li :class="`pl-${(link.depth - 1) * 2}`">
                         <a
                             :href="`#${link.id}`"
-                            class="text-blue-600 hover:text-blue-800 block py-1"
+                            class="text-violet-800 hover:text-violet-900 block py-1"
                             @click.prevent="scrollToHeading(link.id)"
                         >
                             {{ link.text }}
@@ -200,7 +126,7 @@
                         >
                             <a
                                 :href="`#${child.id}`"
-                                class="text-blue-600 hover:text-blue-800 block py-1"
+                                class="text-violet-800 hover:text-violet-900 block py-1"
                                 @click.prevent="scrollToHeading(child.id)"
                             >
                                 {{ child.text }}
@@ -214,11 +140,9 @@
 </template>
 
 <script setup>
-import { siteConfig } from '../../siteConfig'
 import { useFormatDate } from '~/composables/useFormatDate'
 
 const route = useRoute()
-const defaultImage = ref(siteConfig.defaultImage)
 const { formatDate } = useFormatDate()
 const { moveTag } = useTag()
 

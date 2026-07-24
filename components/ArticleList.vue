@@ -25,7 +25,7 @@
           />
         </NuxtLink>
         <h3 class="mt-4 text-lg font-semibold">
-          <NuxtLink :to="article.path" class="text-blue-600 hover:text-blue-800">
+          <NuxtLink :to="article.path" class="text-violet-800 hover:text-violet-900">
             {{ article.title }}
           </NuxtLink>
         </h3>

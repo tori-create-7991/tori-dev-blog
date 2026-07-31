@@ -1,44 +1,87 @@
 <template>
-  <section class="pb-12">
+  <div>
+    <!-- Hero -->
     <section class="relative">
-      <div class="w-full h-[50vh] relative">
-        <nuxt-img
+      <div class="w-full h-[45vh] relative">
+        <NuxtImg
           :src="heroImage"
           class="absolute inset-0 w-full h-full object-cover"
           :modifiers="{ format: 'webp', quality: 80 }"
           alt="Hero background"
         />
-        <div class="flex items-center justify-center h-full relative z-10">
-          <div class="text-center text-white">
-            <p class="text-2xl font-bold">{{ siteConfig.welcomeMessage }}</p>
+        <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+          <div class="text-center text-white px-4">
+            <p class="font-display text-2xl sm:text-3xl font-bold">{{ siteConfig.welcomeMessage }}</p>
           </div>
         </div>
       </div>
     </section>
-  </section>
+
+    <div class="mx-auto max-w-screen-xl px-4">
+      <!-- Works抜粋 -->
+      <section class="py-12">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="font-display text-xl font-bold text-gray-900">実績</h2>
+          <NuxtLink to="/works" class="text-sm text-violet-800 hover:underline">すべて見る</NuxtLink>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <UCard v-for="work in latestWorks" :key="work.path">
+            <NuxtLink :to="work.path" class="block">
+              <span class="text-xs font-medium text-violet-800">{{ categoryLabel(work.category) }}</span>
+              <h3 class="mt-1 font-semibold text-gray-900">{{ work.title }}</h3>
+              <p class="mt-2 text-sm text-gray-600 line-clamp-2">{{ work.description }}</p>
+            </NuxtLink>
+          </UCard>
+        </div>
+      </section>
+
+      <!-- 最新blog -->
+      <section class="py-12 border-t border-gray-200">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="font-display text-xl font-bold text-gray-900">最新の記事</h2>
+          <NuxtLink to="/posts" class="text-sm text-violet-800 hover:underline">すべて見る</NuxtLink>
+        </div>
+        <ArticleList :articles="latestPosts" />
+      </section>
+
+      <!-- About要約 -->
+      <section class="py-12 border-t border-gray-200">
+        <h2 class="font-display text-xl font-bold text-gray-900 mb-3">About</h2>
+        <p class="text-gray-600 leading-relaxed max-w-2xl">
+          {{ siteConfig.description }}
+        </p>
+        <NuxtLink to="/sidecontent/about" class="mt-3 inline-block text-sm text-violet-800 hover:underline">
+          プロフィールを見る
+        </NuxtLink>
+      </section>
+
+      <!-- 接点 -->
+      <section class="py-12 border-t border-gray-200 text-center">
+        <h2 class="font-display text-xl font-bold text-gray-900 mb-3">お問い合わせ</h2>
+        <p class="text-gray-600 mb-6">AI 導入・DX に関するご相談はこちらから。</p>
+        <UButton :to="siteConfig.advisoryPath" color="secondary" size="lg">
+          {{ siteConfig.advisoryCtaLabel }}
+        </UButton>
+      </section>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { siteConfig } from '~/siteConfig'
+import { siteConfig, workCategoryLabel } from '~/siteConfig'
+import ArticleList from '~/components/ArticleList.vue'
+
 const heroImage = '/default.jpg'
+
+const { data: works } = await useAsyncData('home-works', () => {
+  return queryCollection('works').order('date', 'DESC').limit(3).all()
+})
+const latestWorks = computed(() => works.value || [])
+
+const { data: posts } = await useAsyncData('home-posts', () => {
+  return queryCollection('posts').order('date', 'DESC').limit(3).all()
+})
+const latestPosts = computed(() => posts.value || [])
+
+const categoryLabel = workCategoryLabel
 </script>
-
-<style>
-.home {
-  padding-bottom: 50px;
-}
-
-.home-hero__content {
-  background-size: cover;
-  background-position: center center;
-  width: 100%;
-  height: 50vh;
-}
-
-.home-hero__content-text {
-  color: white;
-  text-align: center;
-  font-size: 28px;
-  font-weight: bold;
-}
-</style>

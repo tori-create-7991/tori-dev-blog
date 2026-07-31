@@ -38,4 +38,10 @@ useHead({
         },
     ],
 })
+
+// AEO: aboutページのみPersonの構造化データを注入
+if (route.path === '/sidecontent/about') {
+    const { personJsonLd, injectJsonLd } = useStructuredData()
+    injectJsonLd(personJsonLd())
+}
 </script>

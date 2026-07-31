@@ -36,7 +36,8 @@ export default defineNuxtConfig({
             failOnError: false,
             routes: [
                 ...sidebarItem.map(item => item.to),
-                ...footerItem.map(item => item.to)
+                ...footerItem.map(item => item.to),
+                '/sitemap.xml'
             ]
         },
 
@@ -91,11 +92,17 @@ export default defineNuxtConfig({
         '@nuxt/content',
         '@nuxt/eslint',
         '@nuxt/fonts',
-        '@nuxt/icon',
         '@nuxt/image',
         '@nuxt/ui',
         '@pinia/nuxt',
     ],
+
+    // minimalスタイルはライト前提のデザイントークンのため、OSのダークモード設定に
+    // 追従させずライト固定にする
+    colorMode: {
+        preference: 'light',
+        fallback: 'light',
+    },
 
     image: {
     //     provider: 'ipxStatic',
@@ -145,6 +152,12 @@ export default defineNuxtConfig({
 
     dir: {
         public: process.env.NODE_ENV === 'production' ? 'public' : 'public_dev'
+    },
+
+    runtimeConfig: {
+        public: {
+            siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://tori-dev.com',
+        },
     },
 
 

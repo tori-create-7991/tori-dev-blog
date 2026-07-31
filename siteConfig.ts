@@ -13,6 +13,19 @@ export const siteConfig = {
   advisoryPath: "/advisory",
 };
 
+// works の category(enum) → 表示ラベル・表示順。content.config.tsのenum定義と手動同期する
+export const workCategories = [
+  { key: "ax-dx", label: "AX・DX" },
+  { key: "training", label: "研修" },
+  { key: "development", label: "開発" },
+];
+
+export const workCategoryLabel = (key) =>
+  workCategories.find((c) => c.key === key)?.label || key;
+
+export const authorName = "利根川 諒";
+export const authorAlternateName = "Ryo Tonegawa";
+
 export const sidebarItem = [
   {
     title: "Top",
@@ -21,6 +34,14 @@ export const sidebarItem = [
   {
     title: "About",
     to: "/sidecontent/about",
+  },
+  {
+    title: "Works",
+    to: "/works",
+  },
+  {
+    title: "Blog",
+    to: "/posts",
   },
   {
     title: "顧問サービス",

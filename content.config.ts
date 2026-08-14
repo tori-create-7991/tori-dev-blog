@@ -55,8 +55,30 @@ export default defineContentConfig({
       }),
     }),
     sideContent: defineCollection({
-      source: 'sidecontent/*.md',
+      // ファイルはcontent/sidecontent/配下のまま、URLは/sidecontent/を外してflat化する
+      source: { include: 'sidecontent/*.md', prefix: '/' },
       type: 'page',
+    }),
+    service: defineCollection({
+      source: 'service/*.md',
+      type: 'page',
+      schema: z.object({
+        title: z.string(),
+        description: z.string(),
+        category: z.enum(['advisory', 'training', 'development']),
+        price: z.string().optional(),
+        features: z.array(z.string()).optional(),
+      }),
+    }),
+    feed: defineCollection({
+      source: 'feed/*.md',
+      type: 'page',
+      schema: z.object({
+        title: z.string(),
+        date: z.date(),
+        sourceUrl: z.string().optional(),
+        platform: z.enum(['x', 'bluesky']).optional(),
+      }),
     }),
     works: defineCollection({
       source: 'works/*.md',

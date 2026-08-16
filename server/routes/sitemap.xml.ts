@@ -32,18 +32,30 @@ export default defineEventHandler(async (event) => {
   )
 
   try {
-    const [posts, works] = await Promise.all([
+    const [posts, works, services, feed] = await Promise.all([
       queryCollection(event, 'posts').select('path', 'date').all(),
       queryCollection(event, 'works').select('path', 'date').all(),
+      queryCollection(event, 'service').select('path').all(),
+      queryCollection(event, 'feed').select('path', 'date').all(),
     ])
 
     const urls = [
       ...staticPaths.map((path) => ({ path, lastmod: null })),
       ...posts.map((p) => ({ path: p.path, lastmod: p.date })),
       ...works.map((w) => ({ path: w.path, lastmod: w.date })),
+      ...services.map((s) => ({ path: s.path, lastmod: null })),
+      ...feed.map((f) => ({ path: f.path, lastmod: f.date })),
     ]
 
-    return buildXml(siteUrl, urls)
+    // staticPaths(footerItemの/service/advisory等)と動的パスの重複を除去
+    const seen = new Set()
+    const dedupedUrls = urls.filter((u) => {
+      if (seen.has(u.path)) return false
+      seen.add(u.path)
+      return true
+    })
+
+    return buildXml(siteUrl, dedupedUrls)
   } catch (error) {
     console.error('[sitemap.xml] コンテンツ取得に失敗、静的パスのみで出力します', error)
     return buildXml(

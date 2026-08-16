@@ -50,7 +50,7 @@
         <p class="text-gray-600 leading-relaxed max-w-2xl">
           {{ siteConfig.description }}
         </p>
-        <NuxtLink to="/sidecontent/about" class="mt-3 inline-block text-sm text-violet-800 hover:underline">
+        <NuxtLink to="/about" class="mt-3 inline-block text-sm text-violet-800 hover:underline">
           プロフィールを見る
         </NuxtLink>
       </section>

@@ -17,14 +17,6 @@
             </nav>
 
             <div class="flex items-center gap-3">
-                <UButton
-                    :to="advisoryPath"
-                    color="secondary"
-                    class="hidden sm:inline-flex"
-                >
-                    {{ advisoryCtaLabel }}
-                </UButton>
-
                 <button
                     class="md:hidden p-2 text-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700 rounded-md"
                     :aria-label="mobileMenuOpen ? 'メニューを閉じる' : 'メニューを開く'"
@@ -53,13 +45,6 @@
                 >
                     {{ item.label }}
                 </NuxtLink>
-                <NuxtLink
-                    :to="advisoryPath"
-                    class="mt-2 rounded-md px-3 py-2 text-base font-semibold text-white bg-violet-800 hover:bg-violet-900 text-center"
-                    @click="mobileMenuOpen = false"
-                >
-                    {{ advisoryCtaLabel }}
-                </NuxtLink>
             </nav>
         </div>
     </header>
@@ -70,8 +55,6 @@ import { siteConfig, sidebarItem } from '~/siteConfig'
 import { useRoute } from 'vue-router'
 
 const toolbarTitle = siteConfig.siteTitle
-const advisoryPath = siteConfig.advisoryPath
-const advisoryCtaLabel = siteConfig.advisoryCtaLabel
 const mobileMenuOpen = ref(false)
 
 const navItems = sidebarItem.map((item) => ({

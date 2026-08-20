@@ -35,6 +35,23 @@
         </div>
       </section>
 
+      <!-- Service抜粋 -->
+      <section class="py-12 border-t border-gray-200">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="font-display text-xl font-bold text-gray-900">Service</h2>
+          <NuxtLink to="/service" class="text-sm text-violet-800 hover:underline">すべて見る</NuxtLink>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <UCard v-for="item in services" :key="item.path">
+            <NuxtLink :to="item.path" class="block">
+              <span class="text-xs font-medium text-violet-800">{{ serviceCategoryLabel(item.category) }}</span>
+              <h3 class="mt-1 font-semibold text-gray-900">{{ item.title }}</h3>
+              <p class="mt-2 text-sm text-gray-600 line-clamp-2">{{ item.description }}</p>
+            </NuxtLink>
+          </UCard>
+        </div>
+      </section>
+
       <!-- 最新blog -->
       <section class="py-12 border-t border-gray-200">
         <div class="flex items-center justify-between mb-6">
@@ -68,7 +85,7 @@
 </template>
 
 <script setup>
-import { siteConfig, workCategoryLabel } from '~/siteConfig'
+import { siteConfig, workCategoryLabel, serviceCategoryLabel } from '~/siteConfig'
 import ArticleList from '~/components/ArticleList.vue'
 
 const heroImage = '/default.jpg'
@@ -77,6 +94,11 @@ const { data: works } = await useAsyncData('home-works', () => {
   return queryCollection('works').order('date', 'DESC').limit(3).all()
 })
 const latestWorks = computed(() => works.value || [])
+
+const { data: servicesData } = await useAsyncData('home-services', () => {
+  return queryCollection('service').all()
+})
+const services = computed(() => servicesData.value || [])
 
 const { data: posts } = await useAsyncData('home-posts', () => {
   return queryCollection('posts').order('date', 'DESC').limit(3).all()

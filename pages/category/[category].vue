@@ -1,11 +1,10 @@
 <template>
   <article class="mx-10">
-    <div class="mb-4 text-lg font-semibold">
-      <span v-if="currentCategory">
-        カテゴリー: {{ currentCategory }}
-      </span>
+    <AppBreadcrumb :items="breadcrumbItems" />
+    <h1 class="mb-4 font-display text-xl font-bold text-gray-900 dark:text-white">
+      <span v-if="currentCategory">カテゴリー: {{ currentCategory }}</span>
       <span v-else>カテゴリー: すべて</span>
-    </div>
+    </h1>
 
     <div class="flex flex-wrap gap-2 mb-6">
       <span
@@ -48,6 +47,7 @@ const fetchCategoryPosts = async (category) => {
 
         return queryCollection('posts')
             .where('categories', 'LIKE', `%${category}%`)
+            .select('path', 'title', 'description', 'date', 'image', 'tags', 'categories')
             .order('id', 'DESC')
             .all()
     } catch (error) {
@@ -68,6 +68,21 @@ if (error.value) {
 } else {
     mainStore.setCategoryPost(categoryPost.value)
 }
+
+const postCount = computed(() => storeCategoryPost.value?.length || 0)
+
+const breadcrumbItems = computed(() => [
+    { name: 'ホーム', path: '/' },
+    { name: 'ブログ', path: '/posts' },
+    { name: `カテゴリー: ${currentCategory.value}`, path: route.path },
+])
+
+// 記事 1 本以下のカテゴリページは noindex, follow（薄いページをインデックスさせない）
+usePageSeo({
+    title: `${currentCategory.value} の記事`,
+    description: `カテゴリー「${currentCategory.value}」の記事一覧（${postCount.value}件）。`,
+    robots: postCount.value <= 1 ? 'noindex, follow' : undefined,
+})
 
 </script>
 

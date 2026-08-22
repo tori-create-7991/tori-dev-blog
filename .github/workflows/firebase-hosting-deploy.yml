@@ -73,9 +73,10 @@ jobs:
       - name: Content sync
         run: npm run content-sync || echo "Content sync skipped"
 
-      # eyecatch画像生成（失敗してもビルドは続行）
-      - name: Generate eyecatch images
-        run: npm run generate-eyecatch || echo "Eyecatch generation skipped"
+      # eyecatch画像はビルド時生成をやめ、タイトル由来の CSS サムネイル
+      # (components/ArticleThumb.vue) に置き換えたためステップごと削除した。
+      # 旧 `npm run generate-eyecatch` は package.json に存在せず、
+      # 毎ビルド無言でスキップされていた。
 
       # SSGビルド
       - name: Generate static site

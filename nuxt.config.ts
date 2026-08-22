@@ -37,7 +37,8 @@ export default defineNuxtConfig({
             routes: [
                 ...sidebarItem.map(item => item.to),
                 ...footerItem.map(item => item.to),
-                '/sitemap.xml'
+                '/sitemap.xml',
+                '/rss.xml'
             ]
         },
 

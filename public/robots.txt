@@ -1,2 +1,80 @@
-User-Agent: *
-Disallow:
+# tori-dev.com
+# AI 検索・生成AI回答での引用を歓迎する。学習系ボットも許可する。
+#
+# 注意1: 検索/引用用のクローラ(OAI-SearchBot, Claude-SearchBot, PerplexityBot 等)は
+#        学習用ボットとは別 User-Agent で、これらを塞ぐと各 AI の回答から消える。
+# 注意2: robots.txt は「最も具体的にマッチする1グループだけ」が適用され、
+#        個別グループは User-agent: * の記述を継承しない。
+#        そのため Disallow は全グループに同じ内容を書いている。
+
+User-agent: *
+Allow: /
+# @nuxt/content が生成する内部ダンプ(コンテンツ全文のSQL)。重複コンテンツになるため塞ぐ
+Disallow: /__nuxt_content/
+# SPA フォールバック用の生成物。実ページではない
+Disallow: /404
+Disallow: /200
+
+# --- 検索・引用系（絶対にブロックしない）---
+User-agent: Googlebot
+Allow: /
+Disallow: /__nuxt_content/
+Disallow: /404
+Disallow: /200
+
+User-agent: Bingbot
+Allow: /
+Disallow: /__nuxt_content/
+Disallow: /404
+Disallow: /200
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /__nuxt_content/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /__nuxt_content/
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /__nuxt_content/
+
+User-agent: Claude-User
+Allow: /
+Disallow: /__nuxt_content/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /__nuxt_content/
+
+User-agent: Perplexity-User
+Allow: /
+Disallow: /__nuxt_content/
+
+User-agent: DuckAssistBot
+Allow: /
+Disallow: /__nuxt_content/
+
+User-agent: Applebot
+Allow: /
+Disallow: /__nuxt_content/
+
+# --- 学習系（個人ブランドの認知形成上、許可する）---
+User-agent: GPTBot
+Allow: /
+Disallow: /__nuxt_content/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /__nuxt_content/
+
+User-agent: Google-Extended
+Allow: /
+Disallow: /__nuxt_content/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /__nuxt_content/
+
+Sitemap: https://tori-dev.com/sitemap.xml

@@ -12,6 +12,24 @@
   --spacing-4: 16px;
   --spacing-6: 24px;
   --spacing-8: 32px;
+
+}
+
+/* @nuxt/ui の secondary(UButton/UBadge 等)をサイトのアクセント(セージ #A2A897)にする。
+   app.config.ts のエイリアス名(violet)ではなく、この変数が実際の描画色を決める。
+   #A2A897 は #121212 上で 7.66:1（WCAG AAA）、#8b9179 で 5.73:1。 */
+:root {
+  --ui-color-secondary-50: #f5f6f3;
+  --ui-color-secondary-100: #e8eae4;
+  --ui-color-secondary-200: #d3d7cb;
+  --ui-color-secondary-300: #b8bfab;
+  --ui-color-secondary-400: #a2a897;
+  --ui-color-secondary-500: #8b9179;
+  --ui-color-secondary-600: #737a61;
+  --ui-color-secondary-700: #5c614f;
+  --ui-color-secondary-800: #4a4e42;
+  --ui-color-secondary-900: #3e4138;
+  --ui-color-secondary-950: #212319;
 }
 
 /* 旧tori-dev.com(Vuetify dark theme)の配色(背景#121212, elevated#272727)に合わせる */

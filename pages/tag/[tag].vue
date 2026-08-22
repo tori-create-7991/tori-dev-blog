@@ -1,9 +1,10 @@
 <template>
     <article class="mx-10">
-        <div class="mb-4 text-lg font-semibold">
+        <AppBreadcrumb :items="breadcrumbItems" />
+        <h1 class="mb-4 font-display text-xl font-bold text-gray-900 dark:text-white">
             <span v-if="currentTag">タグ: {{ currentTag }}</span>
             <span v-else>タグ: すべて</span>
-        </div>
+        </h1>
 
         <div class="flex flex-wrap gap-2 mb-6">
             <span
@@ -44,6 +45,7 @@ const fetchTagPosts = async (tag) => {
 
         return queryCollection('posts')
             .where('tags', 'LIKE', `%${tag}%`)
+            .select('path', 'title', 'description', 'date', 'image', 'tags', 'categories')
             .order('id', 'DESC')
             .all()
     } catch (error) {
@@ -64,6 +66,22 @@ if (error.value) {
 } else {
     mainStore.setTagPost(tagPost.value)
 }
+
+const postCount = computed(() => storeTagPost.value?.length || 0)
+
+const breadcrumbItems = computed(() => [
+    { name: 'ホーム', path: '/' },
+    { name: 'ブログ', path: '/posts' },
+    { name: `タグ: ${currentTag.value}`, path: route.path },
+])
+
+// 記事が 1 本以下のタグページは内容が薄く、全体の品質評価にマイナスになるため
+// インデックスさせない。リンクは辿らせる(follow)。
+usePageSeo({
+    title: `${currentTag.value} の記事`,
+    description: `「${currentTag.value}」タグが付いた記事の一覧（${postCount.value}件）。`,
+    robots: postCount.value <= 1 ? 'noindex, follow' : undefined,
+})
 
 
 

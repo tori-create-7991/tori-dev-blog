@@ -1,6 +1,9 @@
 <template>
   <div class="mx-auto max-w-screen-xl px-4 py-10">
-    <h1 class="font-display text-2xl font-bold text-gray-900 mb-8 dark:text-white">Works</h1>
+    <h1 class="font-display text-2xl font-bold text-gray-900 mb-2 dark:text-white">実績</h1>
+    <p class="mb-8 text-sm text-gray-600 dark:text-gray-300">
+      AX・DX 支援、研修講師、開発の実績です。
+    </p>
 
     <section v-for="group in groupedWorks" :key="group.key" class="mb-10">
       <h2 class="font-display text-lg font-semibold text-[#A2A897] mb-4">{{ group.label }}</h2>
@@ -34,10 +37,8 @@ const groupedWorks = computed(() => {
     .filter((g) => g.items.length > 0)
 })
 
-useHead({
-  title: 'Works | tori-dev',
-  meta: [
-    { name: 'description', content: 'AX・DX支援、研修講師、個人開発の実績一覧。' },
-  ],
+usePageSeo({
+  title: '実績',
+  description: '中小企業の AX・DX 支援、コーディングブートキャンプ等の研修講師、個人開発の実績一覧。',
 })
 </script>

@@ -1,5 +1,6 @@
 <template>
   <article class="mx-auto max-w-screen-md px-4 py-10">
+    <AppBreadcrumb :items="breadcrumbItems" />
     <span class="text-sm font-medium text-[#A2A897]">{{ categoryLabel }}</span>
     <h1 class="mt-2 font-display text-2xl font-bold text-gray-900 dark:text-white">{{ service?.title }}</h1>
     <p v-if="service?.price" class="mt-2 text-sm text-gray-500 dark:text-gray-400">料金: {{ service.price }}</p>
@@ -38,21 +39,18 @@ if (!service.value) {
 
 const categoryLabel = computed(() => serviceCategoryLabel(service.value?.category))
 
-useHead({
+const breadcrumbItems = computed(() => [
+  { name: 'ホーム', path: '/' },
+  { name: 'サービス', path: '/service' },
+  { name: service.value?.title, path: route.path },
+])
+
+usePageSeo({
   title: service.value?.title,
-  meta: [
-    { key: 'description', name: 'description', content: service.value?.description },
-    { key: 'og:title', property: 'og:title', content: service.value?.title },
-  ],
+  description: service.value?.description,
 })
 
-const { creativeWorkJsonLd, breadcrumbJsonLd, injectJsonLd } = useStructuredData()
-injectJsonLd(creativeWorkJsonLd(service.value))
-injectJsonLd(
-  breadcrumbJsonLd([
-    { name: 'Top', path: '/' },
-    { name: 'Service', path: '/service' },
-    { name: service.value?.title, path: route.path },
-  ])
-)
+const { serviceJsonLd, breadcrumbJsonLd, injectJsonLd } = useStructuredData()
+injectJsonLd(serviceJsonLd(service.value))
+injectJsonLd(breadcrumbJsonLd(breadcrumbItems.value))
 </script>

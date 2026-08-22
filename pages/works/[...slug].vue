@@ -1,5 +1,6 @@
 <template>
   <article class="mx-auto max-w-screen-md px-4 py-10">
+    <AppBreadcrumb :items="breadcrumbItems" />
     <span class="text-sm font-medium text-[#A2A897]">{{ categoryLabel }}</span>
     <h1 class="mt-2 font-display text-2xl font-bold text-gray-900 dark:text-white">{{ work?.title }}</h1>
 
@@ -51,22 +52,19 @@ if (!work.value) {
 
 const categoryLabel = computed(() => workCategoryLabel(work.value?.category))
 
-useHead({
+const breadcrumbItems = computed(() => [
+  { name: 'ホーム', path: '/' },
+  { name: '実績', path: '/works' },
+  { name: work.value?.title, path: route.path },
+])
+
+usePageSeo({
   title: work.value?.title,
-  meta: [
-    { key: 'description', name: 'description', content: work.value?.description },
-    { key: 'og:title', property: 'og:title', content: work.value?.title },
-  ],
+  description: work.value?.description,
 })
 
 // AEO: 構造化データ
 const { creativeWorkJsonLd, breadcrumbJsonLd, injectJsonLd } = useStructuredData()
 injectJsonLd(creativeWorkJsonLd(work.value))
-injectJsonLd(
-  breadcrumbJsonLd([
-    { name: 'Top', path: '/' },
-    { name: 'Works', path: '/works' },
-    { name: work.value?.title, path: route.path },
-  ])
-)
+injectJsonLd(breadcrumbJsonLd(breadcrumbItems.value))
 </script>

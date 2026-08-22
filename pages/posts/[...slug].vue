@@ -112,7 +112,7 @@
                     <li :class="`pl-${(link.depth - 1) * 2}`">
                         <a
                             :href="`#${link.id}`"
-                            class="text-violet-800 hover:text-violet-900 block py-1"
+                            class="text-[#A2A897] hover:text-[#8b9179] block py-1"
                             @click.prevent="scrollToHeading(link.id)"
                         >
                             {{ link.text }}
@@ -126,7 +126,7 @@
                         >
                             <a
                                 :href="`#${child.id}`"
-                                class="text-violet-800 hover:text-violet-900 block py-1"
+                                class="text-[#A2A897] hover:text-[#8b9179] block py-1"
                                 @click.prevent="scrollToHeading(child.id)"
                             >
                                 {{ child.text }}

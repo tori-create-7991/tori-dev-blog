@@ -1,6 +1,6 @@
 <template>
   <article class="mx-auto max-w-screen-md px-4 py-10">
-    <span class="text-sm font-medium text-violet-800">{{ categoryLabel }}</span>
+    <span class="text-sm font-medium text-[#A2A897]">{{ categoryLabel }}</span>
     <h1 class="mt-2 font-display text-2xl font-bold text-gray-900 dark:text-white">{{ work?.title }}</h1>
 
     <div class="mt-3 flex flex-wrap gap-3 text-sm text-gray-500 dark:text-gray-400">

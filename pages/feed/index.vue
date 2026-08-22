@@ -8,7 +8,7 @@
         <div class="prose max-w-none mt-2">
           <ContentRenderer :value="item" />
         </div>
-        <a v-if="item.sourceUrl" :href="item.sourceUrl" target="_blank" class="mt-2 inline-block text-sm text-violet-800 hover:underline">
+        <a v-if="item.sourceUrl" :href="item.sourceUrl" target="_blank" class="mt-2 inline-block text-sm text-[#A2A897] hover:underline">
           元投稿を見る
         </a>
       </UCard>

@@ -1,8 +1,8 @@
 <template>
-  <footer class="bg-white shadow-md py-4">
+  <footer class="bg-white shadow-md py-4 dark:bg-[#121212]">
     <div class="container mx-auto px-4">
       <div class="flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0">
-        <span class="text-gray-600">
+        <span class="text-gray-600 dark:text-gray-300">
           &copy; {{ new Date().getFullYear() }} Tori All Rights Reserved.
         </span>
         <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
@@ -10,7 +10,7 @@
             v-for="item in footerItem"
             :key="item"
             :to="item.to"
-            class="text-gray-600 hover:text-gray-900 transition-colors duration-200"
+            class="text-gray-600 hover:text-gray-900 transition-colors duration-200 dark:hover:text-white dark:text-gray-300"
           >
             {{ item.title }}
           </NuxtLink>

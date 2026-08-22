@@ -1,10 +1,10 @@
 <template>
   <article class="mx-auto max-w-screen-md px-4 py-10">
     <span class="text-sm font-medium text-violet-800">{{ categoryLabel }}</span>
-    <h1 class="mt-2 font-display text-2xl font-bold text-gray-900">{{ service?.title }}</h1>
-    <p v-if="service?.price" class="mt-2 text-sm text-gray-500">料金: {{ service.price }}</p>
+    <h1 class="mt-2 font-display text-2xl font-bold text-gray-900 dark:text-white">{{ service?.title }}</h1>
+    <p v-if="service?.price" class="mt-2 text-sm text-gray-500 dark:text-gray-400">料金: {{ service.price }}</p>
 
-    <ul v-if="service?.features?.length" class="mt-4 space-y-1 text-sm text-gray-700 list-disc list-inside">
+    <ul v-if="service?.features?.length" class="mt-4 space-y-1 text-sm text-gray-700 list-disc list-inside dark:text-gray-300">
       <li v-for="feature in service.features" :key="feature">{{ feature }}</li>
     </ul>
 

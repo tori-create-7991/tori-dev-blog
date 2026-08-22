@@ -13,3 +13,18 @@
   --spacing-6: 24px;
   --spacing-8: 32px;
 }
+
+/* 旧tori-dev.com(Vuetify dark theme)の配色(背景#121212, elevated#272727)に合わせる */
+:root.dark {
+  --ui-bg: #121212;
+  --ui-bg-muted: #1a1a1a;
+  --ui-bg-elevated: #272727;
+  --ui-bg-accented: #333333;
+  --ui-border: #333333;
+  --ui-border-muted: #2a2a2a;
+  --ui-border-accented: #404040;
+}
+
+:root.dark body {
+  background-color: #121212;
+}

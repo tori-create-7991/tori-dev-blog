@@ -97,11 +97,10 @@ export default defineNuxtConfig({
         '@pinia/nuxt',
     ],
 
-    // minimalスタイルはライト前提のデザイントークンのため、OSのダークモード設定に
-    // 追従させずライト固定にする
+    // 旧tori-dev.com(Nuxt2/Vuetify dark theme)の配色に合わせ、ダーク固定にする
     colorMode: {
-        preference: 'light',
-        fallback: 'light',
+        preference: 'dark',
+        fallback: 'dark',
     },
 
     image: {

@@ -9,7 +9,7 @@
                 v-for="tag in mainStore.tags"
                 :key="tag"
                 @click="moveTag(tag)"
-                class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer"
+                class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer dark:bg-gray-800"
             >
                 {{ tag }}
             </span>

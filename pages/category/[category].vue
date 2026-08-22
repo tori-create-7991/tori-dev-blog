@@ -11,7 +11,7 @@
       <span
         v-for="category in mainStore.categories"
         :key="category"
-        class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer"
+        class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer dark:bg-gray-800"
         @click="moveCategory(category)"
       >
         {{ category }}
@@ -24,7 +24,7 @@
         :articles="storeCategoryPost"
       />
       <div v-else class="text-center py-8">
-        <p class="text-gray-600">このカテゴリーに関連する記事はありません</p>
+        <p class="text-gray-600 dark:text-gray-300">このカテゴリーに関連する記事はありません</p>
       </div>
     </section>
   </article>

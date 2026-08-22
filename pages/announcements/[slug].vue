@@ -45,7 +45,7 @@
                         <div
                             v-for="n in recentAnnouncements"
                             :key="n.slug"
-                            class="bg-white rounded-lg shadow-md overflow-hidden"
+                            class="bg-white rounded-lg shadow-md overflow-hidden dark:bg-[#121212]"
                         >
                             <div class="p-4">
                                 <NuxtLink
@@ -75,7 +75,7 @@
                                         {{ n.title }}
                                     </NuxtLink>
                                 </h3>
-                                <div class="mt-4 text-gray-600">
+                                <div class="mt-4 text-gray-600 dark:text-gray-300">
                                     {{ formatDate(n.date) }}
                                 </div>
                             </div>

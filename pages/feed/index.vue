@@ -1,10 +1,10 @@
 <template>
   <div class="mx-auto max-w-screen-md px-4 py-10">
-    <h1 class="font-display text-2xl font-bold text-gray-900 mb-8">Feed</h1>
+    <h1 class="font-display text-2xl font-bold text-gray-900 mb-8 dark:text-white">Feed</h1>
 
     <div v-if="items?.length" class="space-y-4">
       <UCard v-for="item in items" :key="item.path">
-        <p class="text-sm text-gray-500">{{ formatDate(item.date) }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ formatDate(item.date) }}</p>
         <div class="prose max-w-none mt-2">
           <ContentRenderer :value="item" />
         </div>
@@ -13,7 +13,7 @@
         </a>
       </UCard>
     </div>
-    <p v-else class="text-gray-500">
+    <p v-else class="text-gray-500 dark:text-gray-400">
       準備中です。X / Blueskyの短文投稿をここに転載予定です。
     </p>
   </div>

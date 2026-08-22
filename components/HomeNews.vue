@@ -7,7 +7,7 @@
         :key="post.slug"
         class="flex items-start"
       >
-        <p class="text-gray-600">{{ formatDate(post.date) }}</p>
+        <p class="text-gray-600 dark:text-gray-300">{{ formatDate(post.date) }}</p>
         <h3 class="ml-8">
           <NuxtLink :to="`${post.path}`" class="text-blue-600 hover:text-blue-800">
             {{ post.title }}

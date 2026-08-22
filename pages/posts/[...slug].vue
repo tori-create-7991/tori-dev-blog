@@ -4,7 +4,7 @@
         <div v-if="!isTocVisible">
             <button
                 @click="isTocVisible = !isTocVisible"
-                class="fixed right-4 top-20 bg-white text-gray-600 px-3 py-1.5 rounded-md shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors duration-200"
+                class="fixed right-4 top-20 bg-white text-gray-600 px-3 py-1.5 rounded-md shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors duration-200 dark:hover:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:bg-[#121212]"
             >
                 <div class="flex items-center">
                     <svg
@@ -33,18 +33,18 @@
             ]"
         >
             <div>
-                <h1 class="font-display text-2xl sm:text-3xl font-bold text-gray-900">
+                <h1 class="font-display text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                     {{ post?.title }}
                 </h1>
                 <NuxtImg
                     v-if="post?.image"
                     :src="post.image"
-                    class="w-full h-72 object-contain mt-6 rounded-lg bg-gray-50"
+                    class="w-full h-72 object-contain mt-6 rounded-lg bg-gray-50 dark:bg-gray-800"
                     :placeholder="[50, 25, 75, 5]"
                     loading="lazy"
                     :alt="post.title"
                 />
-                <div class="flex flex-wrap items-center gap-3 mt-4 text-sm text-gray-500">
+                <div class="flex flex-wrap items-center gap-3 mt-4 text-sm text-gray-500 dark:text-gray-400">
                     <time>{{ formatDate(post?.date) }}</time>
                     <UBadge
                         v-for="tag in post?.tags"
@@ -61,7 +61,7 @@
                     <ContentRenderer :value="post" />
                 </div>
                 <div v-if="post?.advertisements" class="mt-12">
-                    <p class="text-gray-600">広告を表示しています</p>
+                    <p class="text-gray-600 dark:text-gray-300">広告を表示しています</p>
                     <div
                         v-for="n in post.advertisements"
                         :key="n"
@@ -70,7 +70,7 @@
                     ></div>
                 </div>
                 <div v-if="categoryPost?.length" class="mt-16 mb-16">
-                    <h2 class="font-display text-lg font-semibold text-gray-900 mb-4">関連記事</h2>
+                    <h2 class="font-display text-lg font-semibold text-gray-900 mb-4 dark:text-white">関連記事</h2>
                     <ArticleList :articles="categoryPost" />
                 </div>
             </div>
@@ -79,7 +79,7 @@
         <!-- サイドバー -->
         <div
             :class="[
-                'w-full lg:w-64 fixed lg:right-0 top-0 h-screen overflow-y-auto bg-white p-4 transition-all duration-300',
+                'w-full lg:w-64 fixed lg:right-0 top-0 h-screen overflow-y-auto bg-white dark:bg-[#121212] p-4 transition-all duration-300',
                 isTocVisible ? 'translate-x-0' : 'translate-x-full',
                 'mt-20', // ヘッダーの高さ分のマージン
             ]"
@@ -88,7 +88,7 @@
                 <h2 class="text-lg font-bold">目次</h2>
                 <button
                     @click="isTocVisible = false"
-                    class="text-gray-500 hover:text-gray-700"
+                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400"
                     aria-label="Close table of contents"
                 >
                     <svg

@@ -76,8 +76,8 @@
       <section class="py-12 border-t border-gray-200 text-center">
         <h2 class="font-display text-xl font-bold text-gray-900 mb-3">お問い合わせ</h2>
         <p class="text-gray-600 mb-6">AI 導入・DX に関するご相談はこちらから。</p>
-        <UButton :to="siteConfig.advisoryPath" color="secondary" size="lg">
-          {{ siteConfig.advisoryCtaLabel }}
+        <UButton to="/contact" color="secondary" size="lg">
+          お問い合わせ
         </UButton>
       </section>
     </div>

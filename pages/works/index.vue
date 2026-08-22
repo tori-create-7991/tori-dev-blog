@@ -3,7 +3,7 @@
     <h1 class="font-display text-2xl font-bold text-gray-900 mb-8 dark:text-white">Works</h1>
 
     <section v-for="group in groupedWorks" :key="group.key" class="mb-10">
-      <h2 class="font-display text-lg font-semibold text-violet-800 mb-4">{{ group.label }}</h2>
+      <h2 class="font-display text-lg font-semibold text-[#A2A897] mb-4">{{ group.label }}</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <UCard v-for="work in group.items" :key="work.path">
           <NuxtLink :to="work.path" class="block">

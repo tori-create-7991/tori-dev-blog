@@ -10,7 +10,7 @@
                     v-for="item in navItems"
                     :key="item.to"
                     :to="item.to"
-                    class="text-sm font-medium text-gray-700 hover:text-violet-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700 rounded dark:text-gray-300"
+                    class="text-sm font-medium text-gray-700 hover:text-[#A2A897] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A2A897] rounded dark:text-gray-300"
                 >
                     {{ item.label }}
                 </NuxtLink>
@@ -18,7 +18,7 @@
 
             <div class="flex items-center gap-3">
                 <button
-                    class="md:hidden p-2 text-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-700 rounded-md dark:text-gray-400"
+                    class="md:hidden p-2 text-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A2A897] rounded-md dark:text-gray-400"
                     :aria-label="mobileMenuOpen ? 'メニューを閉じる' : 'メニューを開く'"
                     :aria-expanded="mobileMenuOpen"
                     aria-controls="mobile-menu"

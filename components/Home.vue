@@ -22,12 +22,12 @@
       <section class="py-12">
         <div class="flex items-center justify-between mb-6">
           <h2 class="font-display text-xl font-bold text-gray-900 dark:text-white">実績</h2>
-          <NuxtLink to="/works" class="text-sm text-violet-800 hover:underline">すべて見る</NuxtLink>
+          <NuxtLink to="/works" class="text-sm text-[#A2A897] hover:underline">すべて見る</NuxtLink>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <UCard v-for="work in latestWorks" :key="work.path">
             <NuxtLink :to="work.path" class="block">
-              <span class="text-xs font-medium text-violet-800">{{ categoryLabel(work.category) }}</span>
+              <span class="text-xs font-medium text-[#A2A897]">{{ categoryLabel(work.category) }}</span>
               <h3 class="mt-1 font-semibold text-gray-900 dark:text-white">{{ work.title }}</h3>
               <p class="mt-2 text-sm text-gray-600 line-clamp-2 dark:text-gray-300">{{ work.description }}</p>
             </NuxtLink>
@@ -39,12 +39,12 @@
       <section class="py-12 border-t border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between mb-6">
           <h2 class="font-display text-xl font-bold text-gray-900 dark:text-white">Service</h2>
-          <NuxtLink to="/service" class="text-sm text-violet-800 hover:underline">すべて見る</NuxtLink>
+          <NuxtLink to="/service" class="text-sm text-[#A2A897] hover:underline">すべて見る</NuxtLink>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <UCard v-for="item in services" :key="item.path">
             <NuxtLink :to="item.path" class="block">
-              <span class="text-xs font-medium text-violet-800">{{ serviceCategoryLabel(item.category) }}</span>
+              <span class="text-xs font-medium text-[#A2A897]">{{ serviceCategoryLabel(item.category) }}</span>
               <h3 class="mt-1 font-semibold text-gray-900 dark:text-white">{{ item.title }}</h3>
               <p class="mt-2 text-sm text-gray-600 line-clamp-2 dark:text-gray-300">{{ item.description }}</p>
             </NuxtLink>
@@ -56,7 +56,7 @@
       <section class="py-12 border-t border-gray-200 dark:border-gray-700">
         <div class="flex items-center justify-between mb-6">
           <h2 class="font-display text-xl font-bold text-gray-900 dark:text-white">最新の記事</h2>
-          <NuxtLink to="/posts" class="text-sm text-violet-800 hover:underline">すべて見る</NuxtLink>
+          <NuxtLink to="/posts" class="text-sm text-[#A2A897] hover:underline">すべて見る</NuxtLink>
         </div>
         <ArticleList :articles="latestPosts" />
       </section>
@@ -67,7 +67,7 @@
         <p class="text-gray-600 leading-relaxed max-w-2xl dark:text-gray-300">
           {{ siteConfig.description }}
         </p>
-        <NuxtLink to="/about" class="mt-3 inline-block text-sm text-violet-800 hover:underline">
+        <NuxtLink to="/about" class="mt-3 inline-block text-sm text-[#A2A897] hover:underline">
           プロフィールを見る
         </NuxtLink>
       </section>

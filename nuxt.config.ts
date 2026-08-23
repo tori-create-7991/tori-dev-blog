@@ -98,12 +98,6 @@ export default defineNuxtConfig({
         '@pinia/nuxt',
     ],
 
-    // 旧tori-dev.com(Nuxt2/Vuetify dark theme)の配色に合わせ、ダーク固定にする
-    colorMode: {
-        preference: 'dark',
-        fallback: 'dark',
-    },
-
     image: {
     //     provider: 'ipxStatic',
     //     ipxStatic: {

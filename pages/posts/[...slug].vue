@@ -225,10 +225,18 @@ const { data: categoryPost } = await useAsyncData('categoryPost', () => {
 
 // meta: canonical / OGP / Twitter カード / article:published_time をまとめて出力する。
 // description は frontmatter のものを使う（従来はサイト共通文が出ていた）
+// OGP 画像は frontmatter の指定を優先し、無ければ scripts/build-og-images.py が
+// タイトルから生成した PNG を使う（サイト内 CSS サムネイルと同じ配色）
+const ogImagePath = computed(() => {
+    if (post.value?.image) return post.value.image
+    const slug = route.path.replace(/^\/posts\//, '')
+    return slug ? `/og/posts/${slug}.png` : undefined
+})
+
 usePageSeo({
     title: post.value?.title,
     description: post.value?.description,
-    image: post.value?.image || undefined,
+    image: ogImagePath.value,
     type: 'article',
     publishedTime: post.value?.date,
     modifiedTime: post.value?.updated || post.value?.date,

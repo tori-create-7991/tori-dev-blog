@@ -10,7 +10,9 @@
     "postinstall": "nuxt prepare",
     "get-drive": "NODE_OPTIONS='--loader ts-node/esm' node scripts/getGoogleDrive.ts",
     "get-notion": "NODE_OPTIONS='--loader ts-node/esm' node scripts/getNotiontoMd.ts",
-    "migrate-legacy-posts": "node scripts/migrate-legacy-posts.mjs"
+    "migrate-legacy-posts": "node scripts/migrate-legacy-posts.mjs",
+    "generate-og": "python3 scripts/build-og-images.py",
+    "build-og-font": "bash scripts/build-og-font.sh"
   },
   "dependencies": {
     "@notionhq/client": "^3.0.1",

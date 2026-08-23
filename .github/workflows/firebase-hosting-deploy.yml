@@ -73,10 +73,14 @@ jobs:
       - name: Content sync
         run: npm run content-sync || echo "Content sync skipped"
 
-      # eyecatch画像はビルド時生成をやめ、タイトル由来の CSS サムネイル
-      # (components/ArticleThumb.vue) に置き換えたためステップごと削除した。
-      # 旧 `npm run generate-eyecatch` は package.json に存在せず、
-      # 毎ビルド無言でスキップされていた。
+      # OGP 画像(1200x630 PNG)を記事タイトルから生成する。
+      # SNS はラスタ画像しか受け付けないため CSS では代替できない。
+      # 生成済み PNG はリポジトリにコミットされているので、
+      # ここでは記事が追加・改題されたときの差分だけが生成される。
+      - name: Generate OG images
+        run: |
+          python3 -m pip install --quiet --user Pillow
+          npm run generate-og
 
       # SSGビルド
       - name: Generate static site

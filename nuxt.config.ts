@@ -38,7 +38,8 @@ export default defineNuxtConfig({
                 ...sidebarItem.map(item => item.to),
                 ...footerItem.map(item => item.to),
                 '/sitemap.xml',
-                '/rss.xml'
+                '/rss.xml',
+                '/robots.txt'
             ]
         },
 
@@ -157,6 +158,10 @@ export default defineNuxtConfig({
     runtimeConfig: {
         public: {
             siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://tori-dev.com',
+            // 'production' | 'preview'。preview のときは全ページ noindex にし、
+            // robots.txt も全面ブロックにする（本番と同一内容が2ドメインで
+            // 索引されるのを防ぐ）
+            siteEnv: process.env.NUXT_PUBLIC_SITE_ENV || 'production',
         },
     },
 

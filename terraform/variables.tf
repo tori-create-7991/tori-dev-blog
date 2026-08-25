@@ -38,9 +38,27 @@ variable "cloudrun_service_name" {
 }
 
 variable "custom_domain" {
-  description = "カスタムドメイン（空=設定なし）"
+  description = "本番カスタムドメイン（apex 想定。空=設定なし）"
   type        = string
   default     = ""
+}
+
+variable "preview_site_suffix" {
+  description = "プレビュー用 Firebase Hosting サイト接尾辞（site_id = project_id-suffix）"
+  type        = string
+  default     = "preview"
+}
+
+variable "preview_custom_domain" {
+  description = "プレビュー用カスタムドメイン（空=設定なし）"
+  type        = string
+  default     = ""
+}
+
+variable "enable_preview_site" {
+  description = "プレビュー環境（別 Hosting サイト + ドメイン）を作るか"
+  type        = bool
+  default     = true
 }
 
 variable "cloudflare_api_token" {

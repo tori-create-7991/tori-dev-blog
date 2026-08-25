@@ -1,4 +1,19 @@
-# tori-dev.com
+import { siteConfig } from '~/siteConfig'
+
+/**
+ * robots.txt を環境で出し分ける。
+ *
+ * - production: 全許可 + Sitemap 宣言 + 検索/引用系 AI クローラの明示 Allow。
+ *   検索用と学習用のクローラは別 User-Agent で、検索用(OAI-SearchBot,
+ *   Claude-SearchBot, PerplexityBot 等)を塞ぐと各 AI の回答から消えるため
+ *   すべて許可する。
+ * - preview: 全面ブロック。本番と同一内容が 2 ドメインで索引されるのを防ぐ。
+ *
+ * 静的な public/robots.txt では環境で出し分けられないため server route にした。
+ * ビルド時に prerender されるので、配信は静的ファイルと同じ。
+ */
+
+const PRODUCTION_ROBOTS = (siteUrl: string) => `# ${siteConfig.siteTitle}
 # AI 検索・生成AI回答での引用を歓迎する。学習系ボットも許可する。
 #
 # 注意1: 検索/引用用のクローラ(OAI-SearchBot, Claude-SearchBot, PerplexityBot 等)は
@@ -77,4 +92,22 @@ User-agent: Applebot-Extended
 Allow: /
 Disallow: /__nuxt_content/
 
-Sitemap: https://tori-dev.com/sitemap.xml
+Sitemap: ${siteUrl}/sitemap.xml
+`
+
+const PREVIEW_ROBOTS = `# 検証環境（preview ブランチ）
+# 本番 https://tori-dev.com と同一内容のため、検索エンジンには一切開放しない。
+# 全ページには meta robots の noindex も出している。
+
+User-agent: *
+Disallow: /
+`
+
+export default defineEventHandler((event) => {
+  const config = useRuntimeConfig()
+  const siteUrl = String(config.public.siteUrl).replace(/\/$/, '')
+  const isPreview = config.public.siteEnv === 'preview'
+
+  setHeader(event, 'Content-Type', 'text/plain; charset=UTF-8')
+  return isPreview ? PREVIEW_ROBOTS : PRODUCTION_ROBOTS(siteUrl)
+})

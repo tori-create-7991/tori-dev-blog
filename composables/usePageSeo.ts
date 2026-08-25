@@ -37,6 +37,9 @@ export const usePageSeo = (options: PageSeoOptions = {}) => {
   const route = useRoute()
   const config = useRuntimeConfig()
   const siteUrl = String(config.public.siteUrl).replace(/\/$/, '')
+  // 検証環境(preview ブランチ)は本番と同一内容なので、全ページを索引対象から外す。
+  // ページ側で robots を明示していてもプレビューの noindex を優先する
+  const isPreview = config.public.siteEnv === 'preview'
 
   const rawPath = options.path ?? route.path
   // cleanUrls: true のため末尾スラッシュは持たせない（ルートのみ '/'）
@@ -65,7 +68,7 @@ export const usePageSeo = (options: PageSeoOptions = {}) => {
     twitterImage: image,
     articlePublishedTime: toIso(options.publishedTime),
     articleModifiedTime: toIso(options.modifiedTime),
-    robots: options.robots,
+    robots: isPreview ? 'noindex, nofollow' : options.robots,
   })
 
   useHead({

@@ -52,6 +52,12 @@ resource "google_firebase_hosting_custom_domain" "preview" {
   custom_domain = var.preview_custom_domain
 
   wait_dns_verification = false
+
+  # Firebase は「1ドメイン = 1サイト」の制約を持つ。
+  # preview.tori-dev.com を blog サイトから preview サイトへ移す場面では、
+  # 先に blog 側の紐付けが destroy されていないと "already in use" で作成に失敗する。
+  # 依存を明示して destroy → create の順序を固定する。
+  depends_on = [google_firebase_hosting_custom_domain.blog]
 }
 
 output "firebase_hosting_site_id" {

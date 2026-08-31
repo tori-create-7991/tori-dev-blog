@@ -35,4 +35,8 @@ resource "cloudflare_record" "firebase_hosting_preview" {
   ttl     = 1
 
   comment = "preview ブランチ -> 検証サイト（noindex）"
+
+  # 同名レコードの付け替えになる場合に destroy → create の順序を固定する
+  # （Cloudflare も同一 name/type の重複レコードを許さない）
+  depends_on = [cloudflare_record.firebase_hosting]
 }

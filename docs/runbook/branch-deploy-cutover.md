@@ -23,15 +23,24 @@ DNS とカスタムドメインの付け替えを伴うため、**順序を守�
 
 ### 1. GitHub Variables を設定する（human）
 
+**CI の Terraform Apply はブランチに関係なく同じ変数セットを渡す。**
+そのため `CUSTOM_DOMAIN` を先に本番ドメインにすると、preview ブランチを push した時点で
+apex の切替まで同時に走ってしまう。プレビュー検証を先に通すため、**この段階では設定しない**。
+
 ```bash
-gh variable set CUSTOM_DOMAIN --body "tori-dev.com"
+# CUSTOM_DOMAIN は未定義にする（CI 側で '' に解決され、apex は据え置き）
+gh variable delete CUSTOM_DOMAIN
+
 gh variable set PREVIEW_CUSTOM_DOMAIN --body "preview.tori-dev.com"
 gh variable set PREVIEW_SITE_SUFFIX --body "preview"
 gh variable set ENABLE_PREVIEW_SITE --body "true"
 gh variable list
 ```
 
-`CUSTOM_DOMAIN` は移行前 `preview.tori-dev.com` になっている。ここで本番ドメインに変える。
+> `gh variable set --body ""` は "object is missing required key: value" で拒否される。
+> 空にしたい場合は `gh variable delete` を使う。
+
+本番ドメインは手順 4 の直前に設定する。
 
 ### 2. Cloudflare で apex の TTL を下げる（human・任意だが推奨）
 
@@ -40,6 +49,16 @@ apex を A → CNAME に変更する際、Terraform は「削除 → 作成」�
 
 > 現在の A レコードは Terraform 管理外。次の手順で Terraform が同名の CNAME を作ろうとすると
 > **既存レコードと衝突してエラーになる可能性がある**。その場合は 3-b に進む。
+
+#### 同一ドメインの付け替えについて
+
+`preview.tori-dev.com` は現在 `tori-develop-blog`（`custom_domain` として）に紐付いている。
+これを `tori-develop-preview`（`preview_custom_domain`）へ移す際、Firebase の
+「1ドメイン = 1サイト」制約により、**先に旧側の紐付けを destroy しないと作成が失敗する**。
+
+Terraform 側は `depends_on` で destroy → create の順序を固定してあるため、
+通常は 1 回の apply で完了する。万一 `already in use` で失敗した場合は、
+destroy だけは完了しているので **同じ apply をもう一度流せば通る**。
 
 ### 3-a. preview ブランチを作って先に検証環境を立てる（推奨）
 
@@ -83,6 +102,12 @@ terraform -chdir=terraform import \
 **単純に既存 A レコードを削除してから apply する方が確実**（TTL を下げてあれば数分で収束）。
 
 ### 4. main にマージして本番を切り替える（human 承認）
+
+まず本番ドメインを設定する:
+
+```bash
+gh variable set CUSTOM_DOMAIN --body "tori-dev.com"
+```
 
 PR をマージすると CI が走る。承認後:
 - `tori-dev.com` が `tori-develop-blog` に紐付く

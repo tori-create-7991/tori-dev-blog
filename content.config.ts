@@ -77,7 +77,7 @@ export default defineContentConfig({
         title: z.string(),
         date: z.date(),
         sourceUrl: z.string().optional(),
-        platform: z.enum(['x', 'bluesky']).optional(),
+        platform: z.enum(['x', 'bluesky', 'instagram']).optional(),
       }),
     }),
     works: defineCollection({

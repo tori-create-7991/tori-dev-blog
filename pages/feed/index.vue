@@ -14,7 +14,7 @@
       </UCard>
     </div>
     <p v-else class="text-gray-500 dark:text-gray-400">
-      準備中です。X / Blueskyの短文投稿をここに転載予定です。
+      準備中です。X / Bluesky / Instagramの投稿をここに転載予定です。
     </p>
   </div>
 </template>
@@ -31,7 +31,7 @@ const { data: items } = await useAsyncData('feed-index', () => {
 useHead({
   title: 'Feed | tori-dev',
   meta: [
-    { name: 'description', content: 'X / Blueskyの短文投稿(つぶやき)一覧。' },
+    { name: 'description', content: 'X / Bluesky / Instagramの投稿一覧。' },
   ],
 })
 </script>

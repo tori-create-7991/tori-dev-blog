@@ -10,8 +10,11 @@
 #     検索・AI クローラを意図せず遮断する事故を防ぐ
 
 # 本番（apex）
+# 既定では作らない（manage_apex_dns = false）。
+# apex の A レコードは Terraform 導入前からの手動管理で、Firebase 共通IPを指している。
+# サイトの切り替えは custom_domain の紐付け側で行うため DNS は触らなくてよい。
 resource "cloudflare_record" "firebase_hosting" {
-  count = var.custom_domain != "" ? 1 : 0
+  count = var.manage_apex_dns && var.custom_domain != "" ? 1 : 0
 
   zone_id = var.cloudflare_zone_id
   name    = var.custom_domain

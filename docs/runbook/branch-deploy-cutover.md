@@ -11,11 +11,12 @@ DNS とカスタムドメインの付け替えを伴うため、**順序を守�
 | `tori-dev.com` | default site `tori-develop`（旧 Nuxt2） | `tori-develop-blog`（新 Nuxt3, main） |
 | `preview.tori-dev.com` | `tori-develop-blog`（新 Nuxt3） | `tori-develop-preview`（新 Nuxt3, preview, noindex） |
 | 旧 Nuxt2 | `tori-dev.com` で配信 | `tori-develop.web.app` に残置（ドメイン紐付けのみ解除） |
-| apex の DNS | 手動 A レコード `199.36.158.100` | Terraform 管理の CNAME（Cloudflare フラットニング） |
+| apex の DNS | 手動 A レコード `199.36.158.100` | **変更しない**（`manage_apex_dns = false`） |
 
 ## 前提
 
-- GitHub Environment `production` の required reviewers が設定済み（apply 前に人の承認が入る）
+- 人のゲートは **PR のマージ**。Environment の required reviewers は使わない
+  （`main` への push はレビュー済みの変更しか入らないため）
 - `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ZONE_ID` が GitHub Secrets に登録済み
 - Cloudflare の該当ゾーンで、apex レコードが **DNS-only（グレークラウド）** であること
 
@@ -42,13 +43,15 @@ gh variable list
 
 本番ドメインは手順 4 の直前に設定する。
 
-### 2. Cloudflare で apex の TTL を下げる（human・任意だが推奨）
+### 2. apex の DNS は触らない
 
-apex を A → CNAME に変更する際、Terraform は「削除 → 作成」を行う。伝播待ちを短くするため、
-事前に `tori-dev.com` の A レコードの TTL を 300 秒（5分）に下げ、**最低でも旧 TTL 分だけ待つ**。
+`tori-dev.com` の A レコード `199.36.158.100` は **Firebase Hosting の共通 IP** で、
+Firebase は IP ではなく `Host` ヘッダでサイトを振り分ける（実測: レスポンスに
+`vary: x-fh-requested-host`）。したがって **DNS を変更しなくても、
+カスタムドメインの紐付け先を変えるだけで配信内容が切り替わる**。
 
-> 現在の A レコードは Terraform 管理外。次の手順で Terraform が同名の CNAME を作ろうとすると
-> **既存レコードと衝突してエラーになる可能性がある**。その場合は 3-b に進む。
+A → CNAME への置き換えはタイプ変更のため destroy→create になり、一時的に名前解決が
+落ちる。利点がないので `manage_apex_dns = false`（既定）のままにする。
 
 #### 同一ドメインの付け替えについて
 
@@ -85,21 +88,22 @@ dig +short preview.tori-dev.com                            # tori-develop-previe
 
 > この時点で本番 `tori-dev.com` はまだ旧 Nuxt2 のまま。影響なし。
 
-### 3-b. apex レコードの衝突を解消する（human・必要時のみ）
+### 3-b. 旧サイトから apex の紐付けを外す（切替時に必須）
 
-手順 4 の apply で `cloudflare_record.firebase_hosting` の作成が
-「record already exists」で失敗した場合、既存の手動 A レコードを Terraform に取り込むか、
-削除してから apply し直す。
+Firebase は「1ドメイン = 1サイト」の制約を持つ。`tori-dev.com` は現在
+`tori-develop`（default site、旧 Nuxt2）に紐付いているため、
+**新サイトに紐付ける前に旧側から外す**必要がある。
 
-取り込む場合（レコード ID は Cloudflare ダッシュボードまたは API で確認）:
+旧サイトは Terraform 管理外なので、API で外す:
 
 ```bash
-terraform -chdir=terraform import \
-  'cloudflare_record.firebase_hosting[0]' "<zone_id>/<record_id>"
+TOKEN=$(gcloud auth print-access-token)
+curl -X DELETE -H "Authorization: Bearer $TOKEN" -H "x-goog-user-project: tori-develop" \
+  "https://firebasehosting.googleapis.com/v1beta1/projects/tori-develop/sites/tori-develop/customDomains/tori-dev.com"
 ```
 
-ただし A → CNAME はタイプ変更のため import しても差し替えになる。
-**単純に既存 A レコードを削除してから apply する方が確実**（TTL を下げてあれば数分で収束）。
+外すと `tori-dev.com` は一時的に 404 になる。次の手順 4 の apply で新サイトに
+紐付くまでの数分間が実質的なダウンタイム。
 
 ### 4. main にマージして本番を切り替える（human 承認）
 

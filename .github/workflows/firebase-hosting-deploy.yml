@@ -16,15 +16,19 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # terraform apply -auto-approve が無条件で本番GCPリソースを変更する。
-    # state衝突で他リポジトリの本番リソースを誤破壊した実インシデントの
-    # 教訓により、GitHub Environments の required reviewers で apply前に
-    # 人の承認を挟む。Environment "production" 自体と reviewer 設定は
-    # リポジトリ管理者がGitHub UI(Settings > Environments)で作成する必要
-    # がある（ワークフローYAML単体では承認ゲートは有効化されない）。
+    # 人のゲートは「PR のマージ」で担保する。main への push は
+    # レビュー済みの変更しか入らないため、Environment の required reviewers は
+    # 置かない（二重の承認になり、実運用で形骸化するため）。
     #
-    # preview ブランチも同じ Terraform state を共有し、apply は同一リソース群を
-    # 対象にするため、環境は production のまま（承認ゲートを外さない）。
+    # ただし terraform apply -auto-approve は本番GCPリソースを変更する。
+    # 過去に state prefix 衝突で他リポジトリの本番リソースを誤破壊した
+    # インシデントがあるので、state の prefix は terraform/providers.tf の
+    # 規約（リポジトリ名をフルで含める）を必ず守ること。
+    #
+    # preview ブランチは PR を経ずに push できる。同じ state を共有するため
+    # apply は同一リソース群を対象にするが、apex(custom_domain)の DNS は
+    # manage_apex_dns = false で Terraform 管理外にしてあり、
+    # preview からの push で本番ドメインが動くことはない。
     environment: production
     permissions:
       contents: read

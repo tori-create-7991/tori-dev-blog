@@ -9,6 +9,86 @@
         "firebase.json",
         "**/.*",
         "**/node_modules/**"
+      ],
+      "redirects": [
+        {
+          "regex": "^/(?:md|post)/gas-checkRakutenPayEmailsAndLogDaily/?$",
+          "destination": "/posts/gas-checkrakutenpayemailsandlogdaily",
+          "type": 301
+        },
+        {
+          "regex": "^/(?:md|post)/nuxtLifeCycleMemo/?$",
+          "destination": "/posts/nuxtlifecyclememo",
+          "type": 301
+        },
+        {
+          "regex": "^/(?:md|microcms)/category/(?P<name>[^/]+)/?$",
+          "destination": "/category/:name",
+          "type": 301
+        },
+        {
+          "regex": "^/(?:md|microcms)/tag/(?P<name>[^/]+)/?$",
+          "destination": "/tag/:name",
+          "type": 301
+        },
+        {
+          "regex": "^/(?:md|microcms)/category/?$",
+          "destination": "/category",
+          "type": 301
+        },
+        {
+          "regex": "^/(?:md|microcms)/tag/?$",
+          "destination": "/tag",
+          "type": 301
+        },
+        {
+          "regex": "^/md/?$",
+          "destination": "/posts",
+          "type": 301
+        },
+        {
+          "regex": "^/(?:md|post)/(?P<slug>[^/]+)/?$",
+          "destination": "/posts/:slug",
+          "type": 301
+        }
+      ],
+      "headers": [
+        {
+          "source": "/_nuxt/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            }
+          ]
+        },
+        {
+          "source": "/og/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=604800"
+            }
+          ]
+        },
+        {
+          "source": "/sitemap.xml",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=300"
+            }
+          ]
+        },
+        {
+          "source": "/rss.xml",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=300"
+            }
+          ]
+        }
       ]
     },
     {
@@ -20,6 +100,17 @@
         "firebase.json",
         "**/.*",
         "**/node_modules/**"
+      ],
+      "headers": [
+        {
+          "source": "**",
+          "headers": [
+            {
+              "key": "X-Robots-Tag",
+              "value": "noindex, nofollow"
+            }
+          ]
+        }
       ]
     }
   ]

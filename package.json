@@ -12,7 +12,8 @@
     "get-notion": "NODE_OPTIONS='--loader ts-node/esm' node scripts/getNotiontoMd.ts",
     "migrate-legacy-posts": "node scripts/migrate-legacy-posts.mjs",
     "generate-og": "python3 scripts/build-og-images.py",
-    "build-og-font": "bash scripts/build-og-font.sh"
+    "build-og-font": "bash scripts/build-og-font.sh",
+    "submit-indexnow": "node scripts/submit-indexnow.mjs"
   },
   "dependencies": {
     "@notionhq/client": "^3.0.1",

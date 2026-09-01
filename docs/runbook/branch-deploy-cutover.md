@@ -132,13 +132,32 @@ curl -sS https://tori-dev.com/sitemap.xml | head -5                # tori-dev.co
 **SSL のプロビジョニングに最大 24 時間かかる場合がある**（実際は数時間以内が多い）。
 証明書が発行されるまで https が失敗することがあるので、その間は焦って戻さない。
 
-### 5. 旧 URL の 301 を入れる（別タスク）
+### 5. 旧 URL の 301（実装済み・切替と同時に有効化される）
 
-旧 Nuxt2 の記事 URL は `/md/{slug}/`（旧 sitemap の `/post/*` は既に 404）。
-`firebase.json` の `redirects` で `/md/*` `/post/*` → `/posts/*` を張る。
-詳細は `.research_output/seo_aeo_layout_roadmap_20260822/notes_migration_measurement.md` の Q4。
+`firebase.json` の `redirects` に実装済み。切替時に自動で効く。
 
-これは本 runbook のスコープ外。**切替が安定してから**別 PR で入れる。
+| 旧 | 新 |
+|---|---|
+| `/md/{slug}` `/md/{slug}/` `/post/{slug}` | `/posts/{slug}` |
+| `/md/` `/md` | `/posts` |
+| `/md/category/{name}` `/microcms/category/{name}` | `/category/{name}` |
+| `/md/tag/{name}` `/microcms/tag/{name}` | `/tag/{name}` |
+
+大文字混在の 2 本（`gas-checkRakutenPayEmailsAndLogDaily` / `nuxtLifeCycleMemo`）は
+Nuxt Content が URL を小文字化するため、明示ルールを先頭に置いている。
+
+Firebase Hosting エミュレータで実測済み: 全ケース **1 ホップで 200 に着地**、
+新 URL がリダイレクトに巻き込まれないことも確認（無限ループなし）。
+
+切替後の確認:
+
+```bash
+for p in /md/nuxt-blog/ /post/nuxt-blog /md/ /md/tag/nuxt \
+         /md/gas-checkRakutenPayEmailsAndLogDaily/ /md/nuxtLifeCycleMemo; do
+  curl -sS -m 20 -L -o /dev/null -w "$p hops=%{num_redirects} final=%{http_code}\n" "https://tori-dev.com$p"
+done
+# 期待: すべて hops=1 final=200
+```
 
 ### 6. Search Console に新 sitemap を送る（human）
 

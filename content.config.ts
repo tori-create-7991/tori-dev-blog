@@ -13,7 +13,12 @@ export default defineContentConfig({
         title: z.string(),
         description: z.string(),
         date: z.date(),
-        image: z.string(),
+        // 実質的な内容更新をしたときだけ更新する。日付だけ動かす運用は禁止。
+        // JSON-LD の dateModified / article:modified_time / sitemap の lastmod は
+        // すべてこの値を唯一の情報源にする。
+        updated: z.date().optional(),
+        // アイキャッチが無い記事はタイトル由来の CSS サムネイルにフォールバックするため optional
+        image: z.string().optional(),
         tags: z.array(z.string()),
         categories: z.array(z.string()),
         // article-relay cross-post integration

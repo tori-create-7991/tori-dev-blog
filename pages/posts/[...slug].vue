@@ -33,6 +33,7 @@
             ]"
         >
             <div>
+                <AppBreadcrumb :items="breadcrumbItems" />
                 <h1 class="font-display text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                     {{ post?.title }}
                 </h1>
@@ -40,12 +41,27 @@
                     v-if="post?.image"
                     :src="post.image"
                     class="w-full h-72 object-contain mt-6 rounded-lg bg-gray-50 dark:bg-gray-800"
+                    format="webp"
+                    width="768"
+                    height="288"
+                    sizes="sm:100vw md:768px"
                     :placeholder="[50, 25, 75, 5]"
-                    loading="lazy"
                     :alt="post.title"
                 />
-                <div class="flex flex-wrap items-center gap-3 mt-4 text-sm text-gray-500 dark:text-gray-400">
-                    <time>{{ formatDate(post?.date) }}</time>
+                <!-- メタ行: 公開日 / 更新日 / 著者バイライン。
+                     Google は「著者情報へ導くバイライン」を明示的に求めており、
+                     日付は ISO 8601 を datetime 属性で持たせる -->
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-sm text-gray-500 dark:text-gray-400">
+                    <time :datetime="isoDate(post?.date)">公開 {{ formatDate(post?.date) }}</time>
+                    <time v-if="post?.updated" :datetime="isoDate(post?.updated)">
+                        更新 {{ formatDate(post?.updated) }}
+                    </time>
+                    <span>
+                        文
+                        <NuxtLink to="/about" class="text-[#A2A897] hover:underline">{{ authorName }}</NuxtLink>
+                    </span>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 mt-3 text-sm">
                     <UBadge
                         v-for="tag in post?.tags"
                         :key="tag"
@@ -69,6 +85,17 @@
                         class="mt-4"
                     ></div>
                 </div>
+                <!-- 著者ボックス: E-E-A-T の「誰が書いたか」を記事末尾でも明示する -->
+                <aside class="mt-16 rounded-lg border border-gray-200 p-5 dark:border-[#333333] dark:bg-[#1a1a1a]">
+                    <p class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">この記事を書いた人</p>
+                    <p class="mt-2 font-display text-lg font-semibold text-gray-900 dark:text-white">{{ authorName }}</p>
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ authorJobTitle }}（{{ authorArea }}）</p>
+                    <div class="mt-4 flex flex-wrap gap-4 text-sm">
+                        <NuxtLink to="/about" class="text-[#A2A897] hover:underline">プロフィール</NuxtLink>
+                        <NuxtLink to="/contact" class="text-[#A2A897] hover:underline">ご相談・お問い合わせ</NuxtLink>
+                    </div>
+                </aside>
+
                 <div v-if="categoryPost?.length" class="mt-16 mb-16">
                     <h2 class="font-display text-lg font-semibold text-gray-900 mb-4 dark:text-white">関連記事</h2>
                     <ArticleList :articles="categoryPost" />
@@ -141,10 +168,18 @@
 
 <script setup>
 import { useFormatDate } from '~/composables/useFormatDate'
+import { authorName, authorJobTitle, authorArea } from '~/siteConfig'
 
 const route = useRoute()
 const { formatDate } = useFormatDate()
 const { moveTag } = useTag()
+
+// <time datetime> 用。ISO 8601（タイムゾーン付き）で出す
+const isoDate = (value) => {
+    if (!value) return undefined
+    const d = value instanceof Date ? value : new Date(value)
+    return Number.isNaN(d.getTime()) ? undefined : d.toISOString()
+}
 
 // 目次の表示状態
 const isTocVisible = ref(false)
@@ -178,6 +213,7 @@ if (!post.value) {
 const { data: categoryPost } = await useAsyncData('categoryPost', () => {
     if (post.value?.categories) {
         return queryCollection('posts')
+            .select('path', 'title', 'description', 'date', 'image', 'tags')
             .where('categories', 'LIKE', `%${post.value.categories[0]}%`)
             .where('path', '!=', route.path)
             .order('date', 'DESC')
@@ -187,30 +223,35 @@ const { data: categoryPost } = await useAsyncData('categoryPost', () => {
     return []
 })
 
-// メタ情報の設定
-useHead({
-    title: post.value?.title,
-    meta: [
-        { charset: 'utf-8' },
-        { hid: 'og:title', property: 'og:title', content: post.value?.title },
-        {
-            hid: 'og:image',
-            property: 'og:image',
-            content: post.value?.image,
-        },
-    ],
+// meta: canonical / OGP / Twitter カード / article:published_time をまとめて出力する。
+// description は frontmatter のものを使う（従来はサイト共通文が出ていた）
+// OGP 画像は frontmatter の指定を優先し、無ければ scripts/build-og-images.py が
+// タイトルから生成した PNG を使う（サイト内 CSS サムネイルと同じ配色）
+const ogImagePath = computed(() => {
+    if (post.value?.image) return post.value.image
+    const slug = route.path.replace(/^\/posts\//, '')
+    return slug ? `/og/posts/${slug}.png` : undefined
 })
 
-// AEO: 構造化データ
+usePageSeo({
+    title: post.value?.title,
+    description: post.value?.description,
+    image: ogImagePath.value,
+    type: 'article',
+    publishedTime: post.value?.date,
+    modifiedTime: post.value?.updated || post.value?.date,
+})
+
+const breadcrumbItems = computed(() => [
+    { name: 'ホーム', path: '/' },
+    { name: 'ブログ', path: '/posts' },
+    { name: post.value?.title, path: route.path },
+])
+
+// AEO: 構造化データ（BlogPosting + BreadcrumbList。著者・サイトは @id でサイト全体の Person / WebSite を参照）
 const { articleJsonLd, breadcrumbJsonLd, injectJsonLd } = useStructuredData()
 injectJsonLd(articleJsonLd(post.value))
-injectJsonLd(
-    breadcrumbJsonLd([
-        { name: 'Top', path: '/' },
-        { name: 'Blog', path: '/posts' },
-        { name: post.value?.title, path: route.path },
-    ])
-)
+injectJsonLd(breadcrumbJsonLd(breadcrumbItems.value))
 
 // 画面サイズに応じて目次の表示状態を制御
 onMounted(() => {

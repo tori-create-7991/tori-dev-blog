@@ -1,8 +1,8 @@
 <template>
     <div>
-        <div class="mb-4 text-lg font-semibold">
+        <h1 class="mb-4 font-display text-xl font-bold text-gray-900 dark:text-white">
             タグ一覧
-        </div>
+        </h1>
 
         <div class="flex flex-wrap gap-2 mb-6">
             <span
@@ -28,9 +28,15 @@ const { moveTag } = useTag();
 // すべての投稿を取得
 const { data: allPosts } = await useAsyncData('all-posts', () =>
     queryCollection('posts')
-        .order('id', 'DESC')
+        .select('path', 'title', 'description', 'date', 'image', 'tags', 'categories')
+        .order('date', 'DESC')
         .all()
 )
 
 mainStore.setTagPost(allPosts.value)
+
+usePageSeo({
+    title: 'タグ一覧',
+    description: 'ブログ記事に付けられたタグの一覧。',
+})
 </script>

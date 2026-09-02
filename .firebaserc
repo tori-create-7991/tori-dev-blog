@@ -7,6 +7,9 @@
       "hosting": {
         "blog": [
           "tori-develop-blog"
+        ],
+        "preview": [
+          "tori-develop-preview"
         ]
       }
     }

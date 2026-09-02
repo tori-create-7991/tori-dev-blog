@@ -1,6 +1,7 @@
 <template>
     <article class="mx-auto max-w-screen-md px-4 py-10">
-        <div class="prose max-w-none">
+        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">プライバシーポリシー等</h1>
+        <div class="prose max-w-none mt-8">
             <ContentRenderer :value="post" />
         </div>
     </article>
@@ -18,7 +19,8 @@ if (!post.value) {
     })
 }
 
-useHead({
-    title: post.value?.title,
+usePageSeo({
+    title: 'プライバシーポリシー等',
+    description: '当サイトのプライバシーポリシー、免責事項、外部送信に関する記載。',
 })
 </script>

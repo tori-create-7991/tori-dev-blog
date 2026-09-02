@@ -1,9 +1,13 @@
 name: Deploy to Firebase Hosting
 
+# ブランチで環境を分ける:
+#   main    -> 本番       (${PROJECT}-blog    / tori-dev.com)
+#   preview -> 検証       (${PROJECT}-preview / preview.tori-dev.com、noindex)
 on:
   push:
     branches:
       - main
+      - preview
   workflow_dispatch:
 
 env:
@@ -12,12 +16,19 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # terraform apply -auto-approve が無条件で本番GCPリソースを変更する。
-    # state衝突で他リポジトリの本番リソースを誤破壊した実インシデントの
-    # 教訓により、GitHub Environments の required reviewers で apply前に
-    # 人の承認を挟む。Environment "production" 自体と reviewer 設定は
-    # リポジトリ管理者がGitHub UI(Settings > Environments)で作成する必要
-    # がある（ワークフローYAML単体では承認ゲートは有効化されない）。
+    # 人のゲートは「PR のマージ」で担保する。main への push は
+    # レビュー済みの変更しか入らないため、Environment の required reviewers は
+    # 置かない（二重の承認になり、実運用で形骸化するため）。
+    #
+    # ただし terraform apply -auto-approve は本番GCPリソースを変更する。
+    # 過去に state prefix 衝突で他リポジトリの本番リソースを誤破壊した
+    # インシデントがあるので、state の prefix は terraform/providers.tf の
+    # 規約（リポジトリ名をフルで含める）を必ず守ること。
+    #
+    # preview ブランチは PR を経ずに push できる。同じ state を共有するため
+    # apply は同一リソース群を対象にするが、apex(custom_domain)の DNS は
+    # manage_apex_dns = false で Terraform 管理外にしてあり、
+    # preview からの push で本番ドメインが動くことはない。
     environment: production
     permissions:
       contents: read
@@ -25,6 +36,30 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      # ブランチからデプロイ環境を決める。
+      # ここで決めた値を Terraform / Firebase / ビルドの全ステップで共有する。
+      - name: Resolve deploy environment
+        id: env
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "site_env=production" >> "$GITHUB_OUTPUT"
+            echo "target=blog" >> "$GITHUB_OUTPUT"
+            echo "site_suffix=${{ vars.FIREBASE_SITE_SUFFIX || 'blog' }}" >> "$GITHUB_OUTPUT"
+            echo "site_url=https://${{ vars.CUSTOM_DOMAIN || 'tori-dev.com' }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "site_env=preview" >> "$GITHUB_OUTPUT"
+            echo "target=preview" >> "$GITHUB_OUTPUT"
+            echo "site_suffix=${{ vars.PREVIEW_SITE_SUFFIX || 'preview' }}" >> "$GITHUB_OUTPUT"
+            echo "site_url=https://${{ vars.PREVIEW_CUSTOM_DOMAIN || 'preview.tori-dev.com' }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Show deploy target
+        run: |
+          echo "branch    : ${{ github.ref_name }}"
+          echo "site_env  : ${{ steps.env.outputs.site_env }}"
+          echo "target    : ${{ steps.env.outputs.target }}"
+          echo "site_url  : ${{ steps.env.outputs.site_url }}"
 
       # WIF認証
       - id: auth
@@ -42,6 +77,8 @@ jobs:
         working-directory: terraform
         run: terraform init -backend-config="bucket=${{ secrets.GCP_TF_STATE_BUCKET }}"
 
+      # Terraform は本番・プレビュー両方のリソースを1つの state で管理するため、
+      # どちらのブランチから実行しても同じ変数セットを渡す。
       - name: Terraform Apply
         working-directory: terraform
         run: |
@@ -49,8 +86,11 @@ jobs:
             -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
             -var="github_repo=${{ github.repository }}" \
             -var="firebase_site_suffix=${{ vars.FIREBASE_SITE_SUFFIX || 'blog' }}" \
+            -var="preview_site_suffix=${{ vars.PREVIEW_SITE_SUFFIX || 'preview' }}" \
             -var="cloudrun_service_name=${{ vars.CLOUDRUN_SERVICE_NAME || 'tori-dev-blog' }}" \
             -var="custom_domain=${{ vars.CUSTOM_DOMAIN || '' }}" \
+            -var="preview_custom_domain=${{ vars.PREVIEW_CUSTOM_DOMAIN || '' }}" \
+            -var="enable_preview_site=${{ vars.ENABLE_PREVIEW_SITE || 'true' }}" \
             -var="cloudflare_api_token=${{ secrets.CLOUDFLARE_API_TOKEN || 'dummy_not_used_without_custom_domain_pad' }}" \
             -var="cloudflare_zone_id=${{ secrets.CLOUDFLARE_ZONE_ID || '' }}"
 
@@ -73,12 +113,22 @@ jobs:
       - name: Content sync
         run: npm run content-sync || echo "Content sync skipped"
 
-      # eyecatch画像生成（失敗してもビルドは続行）
-      - name: Generate eyecatch images
-        run: npm run generate-eyecatch || echo "Eyecatch generation skipped"
+      # OGP 画像(1200x630 PNG)を記事タイトルから生成する。
+      # SNS はラスタ画像しか受け付けないため CSS では代替できない。
+      # 生成済み PNG はリポジトリにコミットされているので、
+      # ここでは記事が追加・改題されたときの差分だけが生成される。
+      - name: Generate OG images
+        run: |
+          python3 -m pip install --quiet --user Pillow
+          npm run generate-og
 
       # SSGビルド
+      # NUXT_PUBLIC_SITE_ENV=preview のときは robots.txt を全面ブロックにし、
+      # 全ページに noindex を出す（本番と同一内容が2ドメインで索引される事故を防ぐ）
       - name: Generate static site
+        env:
+          NUXT_PUBLIC_SITE_URL: ${{ steps.env.outputs.site_url }}
+          NUXT_PUBLIC_SITE_ENV: ${{ steps.env.outputs.site_env }}
         run: npm run generate
 
       # Firebase Hosting デプロイ
@@ -88,6 +138,30 @@ jobs:
       - name: Deploy to Firebase Hosting
         run: |
           PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
-          SITE_SUFFIX="${{ vars.FIREBASE_SITE_SUFFIX || 'blog' }}"
-          firebase target:apply hosting blog "${PROJECT_ID}-${SITE_SUFFIX}" --project "${PROJECT_ID}"
-          firebase deploy --only hosting:blog --project "${PROJECT_ID}"
+          SITE_SUFFIX="${{ steps.env.outputs.site_suffix }}"
+          TARGET="${{ steps.env.outputs.target }}"
+          firebase target:apply hosting "${TARGET}" "${PROJECT_ID}-${SITE_SUFFIX}" --project "${PROJECT_ID}"
+          firebase deploy --only "hosting:${TARGET}" --project "${PROJECT_ID}"
+
+      # デプロイ結果を実際に叩いて確認する。
+      # プレビューでは noindex が出ていることまで見る
+      - name: Verify deployment
+        run: |
+          URL="${{ steps.env.outputs.site_url }}"
+          echo "checking ${URL}"
+          for i in 1 2 3; do
+            CODE=$(curl -sS -m 20 -o /tmp/page.html -w '%{http_code}' "${URL}/" || echo 000)
+            [ "$CODE" = "200" ] && break
+            echo "  attempt ${i}: HTTP ${CODE}, retrying..."
+            sleep 10
+          done
+          echo "HTTP ${CODE}"
+          [ "$CODE" = "200" ] || exit 1
+          if [ "${{ steps.env.outputs.site_env }}" = "preview" ]; then
+            grep -qi 'name="robots"[^>]*noindex' /tmp/page.html \
+              && echo "noindex: OK" \
+              || { echo "noindex が出ていない（プレビューが索引される恐れ）"; exit 1; }
+            curl -sS -m 20 "${URL}/robots.txt" | grep -q 'Disallow: /' \
+              && echo "robots.txt blocked: OK" \
+              || { echo "robots.txt がブロックになっていない"; exit 1; }
+          fi

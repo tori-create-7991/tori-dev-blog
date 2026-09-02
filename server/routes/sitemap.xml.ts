@@ -1,4 +1,4 @@
-import { sidebarItem, footerItem } from '~/siteConfig'
+import { sidebarItem, footerItem, secondaryItem, feedPublished } from '~/siteConfig'
 
 const escapeXml = (value: string) =>
   value
@@ -21,27 +21,32 @@ ${urls
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const siteUrl = config.public.siteUrl
+  const siteUrl = String(config.public.siteUrl).replace(/\/$/, '')
 
   setHeader(event, 'Content-Type', 'application/xml; charset=UTF-8')
 
-  // siteConfigのナビ項目(sidebarItem/footerItem)由来の静的パスに、記事詳細ページ用の
-  // 動的パスを重複除去しつつ追加する
+  // siteConfigのナビ項目由来の静的パスに、記事詳細ページ用の動的パスを重複除去しつつ追加する。
+  // つぶやき(Feed)は公開フラグが立つまで sitemap に載せない（0件のページを検索結果に出さない）
   const staticPaths = Array.from(
-    new Set([...sidebarItem, ...footerItem].map((item) => item.to))
+    new Set(
+      [...sidebarItem, ...footerItem, ...(feedPublished ? secondaryItem : [])].map((item) => item.to)
+    )
   )
 
   try {
     const [posts, works, services, feed] = await Promise.all([
-      queryCollection(event, 'posts').select('path', 'date').all(),
+      queryCollection(event, 'posts').select('path', 'date', 'updated').all(),
       queryCollection(event, 'works').select('path', 'date').all(),
       queryCollection(event, 'service').select('path').all(),
-      queryCollection(event, 'feed').select('path', 'date').all(),
+      feedPublished
+        ? queryCollection(event, 'feed').select('path', 'date').all()
+        : Promise.resolve([]),
     ])
 
     const urls = [
       ...staticPaths.map((path) => ({ path, lastmod: null })),
-      ...posts.map((p) => ({ path: p.path, lastmod: p.date })),
+      // lastmod は「最後の重要な更新」を表す。updated があればそれを、無ければ公開日を使う
+      ...posts.map((p) => ({ path: p.path, lastmod: p.updated || p.date })),
       ...works.map((w) => ({ path: w.path, lastmod: w.date })),
       ...services.map((s) => ({ path: s.path, lastmod: null })),
       ...feed.map((f) => ({ path: f.path, lastmod: f.date })),

@@ -1,8 +1,8 @@
 <template>
   <div>
-    <div class="mb-4 text-lg font-semibold">
-      カテゴリー: すべて
-    </div>
+    <h1 class="mb-4 font-display text-xl font-bold text-gray-900 dark:text-white">
+      カテゴリー一覧
+    </h1>
     <section>
       <ArticleList
         :articles="allPosts"
@@ -16,11 +16,15 @@ const mainStore = useStore()
 
 const { data: allPosts } = await useAsyncData('all-posts', () =>
     queryCollection('posts')
-        .order('id', 'DESC')
+        .select('path', 'title', 'description', 'date', 'image', 'tags', 'categories')
+        .order('date', 'DESC')
         .all()
 )
 
-console.log(allPosts.value)
+usePageSeo({
+  title: 'カテゴリー一覧',
+  description: 'ブログ記事のカテゴリー一覧。',
+})
 
 mainStore.setCategoryPost(allPosts.value)
 </script>

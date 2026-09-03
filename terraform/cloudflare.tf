@@ -43,3 +43,24 @@ resource "cloudflare_record" "firebase_hosting_preview" {
   # （Cloudflare も同一 name/type の重複レコードを許さない）
   depends_on = [cloudflare_record.firebase_hosting]
 }
+
+# apex のサイト所有権 TXT レコード
+#
+# Firebase は「1ドメイン = 1サイト」を守るため、apex を別サイトへ付け替えるときに
+# hosting-site=<site_id> の TXT で所有権を確認する。これが無いと
+# customDomain は OWNERSHIP_MISMATCH のまま配信に切り替わらない。
+#
+# A レコード(manage_apex_dns)とは別リソースなので、A は手動管理のまま
+# 所有権レコードだけをコードで管理できる。
+resource "cloudflare_record" "firebase_hosting_ownership" {
+  count = var.custom_domain != "" ? 1 : 0
+
+  zone_id = var.cloudflare_zone_id
+  name    = var.custom_domain
+  content = "hosting-site=${google_firebase_hosting_site.blog.site_id}"
+  type    = "TXT"
+  proxied = false
+  ttl     = 1
+
+  comment = "Firebase Hosting サイト所有権（apex -> 本番サイト）"
+}

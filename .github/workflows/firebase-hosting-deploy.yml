@@ -171,9 +171,12 @@ jobs:
       #
       # - Verify deployment の後に置く。健全性が未確認のサイトへ再クロールを
       #   促さないためと、通知の失敗とデプロイの失敗をログで切り分けるため
-      # - 本番のみ。preview は noindex なので送らない（スクリプト側でも
-      #   NUXT_PUBLIC_SITE_ENV で同じ判定をする二重の保険）
-      # - 通知は補助的な仕組み。失敗してもジョブは落とさず warning に留める
+      # - 本番のみ。preview は noindex なので送らない。スクリプト側も
+      #   NUXT_PUBLIC_SITE_ENV を見るが、算出元はどちらも上の
+      #   "Resolve deploy environment" なので独立した二重防御ではない。
+      #   ここで手動実行されても production 以外は送らない、という保険
+      # - 通知は補助的な仕組み。失敗してもジョブは落とさず warning に留める。
+      #   continue-on-error は npm 起動失敗などスクリプト到達前の異常用
       - name: Notify IndexNow
         if: steps.env.outputs.site_env == 'production'
         continue-on-error: true

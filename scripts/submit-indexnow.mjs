@@ -15,7 +15,7 @@
  * 必要な環境変数:
  *   INDEXNOW_KEY         … public/<key>.txt のキー文字列。IndexNow の仕様上
  *                          公開前提の値なので秘匿対象ではない（Secrets 管理は形式的）
- *   NUXT_PUBLIC_SITE_ENV … production 以外はスキップ（preview 誤送信の保険）
+ *   NUXT_PUBLIC_SITE_ENV … production 以外はスキップ（手動実行時の保険）
  *   NUXT_PUBLIC_SITE_URL … 省略時 https://tori-dev.com
  *
  * 送信失敗・ネットワーク例外・sitemap 不在のいずれでもデプロイを落とさない。
@@ -34,7 +34,10 @@ const dryRun = process.argv.includes('--dry-run')
 const siteUrl = (process.env.NUXT_PUBLIC_SITE_URL || 'https://tori-dev.com').replace(/\/$/, '')
 const key = process.env.INDEXNOW_KEY
 
-// デプロイを巻き込まないため、異常系は warning annotation を出して正常終了する
+// デプロイを巻き込まないため、異常系は warning annotation を出して正常終了する。
+// この関数は呼び出し元に制御を返さない（process.exit する）。
+// 呼び出し側は将来 exit をやめても壊れないよう、直後に continue / return を置く
+/** @returns {never} */
 const warn = (msg) => {
   console.error(`[indexnow] ${msg}`)
   console.log(`::warning title=IndexNow::${msg}`)
@@ -45,16 +48,15 @@ if (!existsSync(SITEMAP)) warn(`${SITEMAP} が無い。先に npm run generate �
 
 // preview 環境の URL を誤って送らないための保険。
 // 本番ドメインをここにハードコードすると CI の vars.CUSTOM_DOMAIN と二重管理になり、
-// ドメイン変更時に通知だけが黙って止まる。CI と同じ site_env を見る
+// ドメイン変更時に通知だけが黙って止まる。CI と同じ site_env を見る。
+// CI の step 条件と算出元が同じなので独立した防御ではなく、手動実行時の保険
 if (process.env.NUXT_PUBLIC_SITE_ENV !== 'production') {
   console.log(`[indexnow] site_env=${process.env.NUXT_PUBLIC_SITE_ENV || '(未設定)'} のためスキップ`)
   process.exit(0)
 }
 
-if (!key && !dryRun) {
-  console.log('[indexnow] INDEXNOW_KEY が未設定のためスキップ')
-  process.exit(0)
-}
+// 本番で鍵が無いのは設定漏れ。他の異常系と同じく warning で可視化する
+if (!key && !dryRun) warn('INDEXNOW_KEY が未設定のためスキップ')
 
 const xml = await readFile(SITEMAP, 'utf-8')
 const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)]
@@ -95,6 +97,7 @@ for (let i = 0; i < urls.length; i += CHUNK) {
     })
   } catch (error) {
     warn(`送信で例外: ${error?.name || ''} ${error?.message || error}`)
+    continue
   }
 
   // 200 = 受理 / 202 = 受理(キー検証待ち) / 429 = レート制限

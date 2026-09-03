@@ -1,42 +1,30 @@
 <template>
   <div>
-    <!-- Hero: 誰に・何を提供する誰か をファーストビューで完結させる。
-         6.1MB の背景写真は LCP を殺していたため撤去し、CSS だけで構成した。
-         H1 は SEO/AEO 上の中核なので絶対にアニメーションさせない。
-         提供価値の 1 行だけを回転させ、停止コントロールを付ける
-         (WCAG 2.2 SC 2.2.2 レベルA。4 件は常に DOM にあるので
-          スクリーンリーダーと JS を実行しない AI クローラは全件を読める) -->
+    <!-- Hero: 売り文句は置かず「誰が・何をしているか」だけを静的に示す。
+         背景は CSS のみ(画像なし)。LCP 要素は H1 テキスト。 -->
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-inner">
-        <p class="hero-eyebrow">
-          {{ authorName }} / {{ authorAlternateName }} — {{ authorArea }}
-        </p>
+        <p class="hero-eyebrow">{{ authorArea }} / フリーランスエンジニア</p>
 
         <h1 id="hero-title" class="hero-title">
-          中小企業の<span class="hero-accent">AI 導入・DX</span> を、<br class="hero-br">現場に入って伴走する技術顧問
+          {{ authorName }}
+          <span class="hero-title-sub">{{ authorAlternateName }}</span>
         </h1>
 
-        <p class="hero-lede">
-          ERP の開発・導入支援とりんご農園の受注分析で現場を回しながら、コーディングブートキャンプでも教えています。
-          ツールを入れて終わりにせず、運用が定着するまで月次で伴走します。
-        </p>
+        <p class="hero-lede">技術顧問・開発・講師をしています。</p>
 
-        <div class="hero-rot">
-          <!-- 停止トグル。DOM 上はローテーションより前＝タブ順で先に来る -->
-          <input id="hero-pause" class="hero-pause-input" type="checkbox" role="switch">
-          <label class="hero-pause" for="hero-pause">
-            <span class="hero-pause-icon" aria-hidden="true"></span>
-            <span class="hero-pause-text">自動切り替えを停止</span>
-          </label>
-
-          <ul class="hero-rot-track">
-            <li v-for="value in heroValues" :key="value" class="hero-rot-item">{{ value }}</li>
-          </ul>
-        </div>
+        <ul class="hero-roles">
+          <li v-for="role in heroRoles" :key="role.to" class="hero-role">
+            <NuxtLink :to="role.to" class="hero-role-link">
+              <span class="hero-role-name">{{ role.name }}</span>
+              <span class="hero-role-desc">{{ role.desc }}</span>
+            </NuxtLink>
+          </li>
+        </ul>
 
         <div class="hero-cta">
-          <NuxtLink class="hero-btn hero-btn--primary" to="/contact">相談する</NuxtLink>
           <NuxtLink class="hero-btn hero-btn--ghost" to="/works">実績を見る</NuxtLink>
+          <NuxtLink class="hero-btn hero-btn--ghost" to="/contact">お問い合わせ</NuxtLink>
         </div>
       </div>
     </section>
@@ -89,7 +77,7 @@
       <section class="py-12 border-t border-gray-200 dark:border-gray-700">
         <h2 class="font-display text-xl font-bold text-gray-900 mb-3 dark:text-white">プロフィール</h2>
         <p class="text-gray-600 leading-relaxed max-w-2xl dark:text-gray-300">
-          {{ siteConfig.description }}
+          {{ authorArea }}在住のフリーランスエンジニア。中小企業の技術顧問、業務システム開発、プログラミング講師をしています。
         </p>
         <NuxtLink to="/about" class="mt-3 inline-block text-sm text-[#A2A897] hover:underline">
           プロフィールを見る
@@ -99,7 +87,7 @@
       <!-- 接点 -->
       <section class="py-12 border-t border-gray-200 text-center dark:border-gray-700">
         <h2 class="font-display text-xl font-bold text-gray-900 mb-3 dark:text-white">お問い合わせ</h2>
-        <p class="text-gray-600 mb-6 dark:text-gray-300">AI 導入・DX に関するご相談はこちらから。</p>
+        <p class="text-gray-600 mb-6 dark:text-gray-300">お仕事のご相談・お問い合わせはこちらから。</p>
         <UButton to="/contact" color="secondary" size="lg">
           お問い合わせ
         </UButton>
@@ -119,12 +107,11 @@ import {
 } from '~/siteConfig'
 import ArticleList from '~/components/ArticleList.vue'
 
-// ヒーローで回転させる提供価値。4 件すべてが常に DOM に存在する
-const heroValues = [
-  'AI 導入支援 — 業務の棚卸しから PoC、社内展開まで',
-  'DX 顧問 — 経営と現場の間に立ち、続く仕組みを作る',
-  '研修・講師 — 生成 AI を「使える」状態にする実践型',
-  '開発 — 小さく作って、確かめながら育てる',
+// ヒーローに並べる役割。各サービスページへの入口を兼ねる
+const heroRoles = [
+  { name: '技術顧問', desc: '中小企業の AI 導入・DX', to: siteConfig.advisoryPath },
+  { name: '開発', desc: '業務システム・Web アプリ', to: '/service/development' },
+  { name: '講師', desc: 'プログラミング研修・ブートキャンプ', to: '/service/training' },
 ]
 
 const { data: works } = await useAsyncData('home-works', () => {
@@ -210,10 +197,12 @@ const categoryLabel = workCategoryLabel
   color: #f4f4f1; /* 17.00:1 */
   word-break: auto-phrase;
 }
-.hero-accent { color: #a2a897; }
-.hero-br { display: none; }
-@media (min-width: 640px) {
-  .hero-br { display: inline; }
+.hero-title-sub {
+  margin-left: 0.5em;
+  font-weight: 400;
+  font-size: 0.5em;
+  letter-spacing: 0.04em;
+  color: #a2a897; /* 7.66:1 */
 }
 
 .hero-lede {
@@ -224,141 +213,47 @@ const categoryLabel = workCategoryLabel
   font-size: clamp(0.95rem, 2.4vw, 1.05rem);
 }
 
-/* ---------- 提供価値のローテーション ---------- */
-.hero-rot {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  margin-top: 2rem;
-  max-width: 46ch;
-}
-
-/* チェックボックス本体は視覚的に隠すがフォーカス可能なまま残す */
-.hero-pause-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  border: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-.hero-pause {
-  order: 2; /* 見た目は右、タブ順は先頭のまま */
-  flex: none;
-  display: inline-grid;
-  place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 999px;
-  /* #4d4d4d は #121212 上で 3:1 以上。#333 は 1.48:1 で境界として成立しない */
-  border: 1px solid #4d4d4d;
-  background: #272727;
-  color: #c9ccc0;
-  cursor: pointer;
-}
-.hero-pause:hover {
-  border-color: #a2a897;
-  color: #a2a897;
-}
-.hero-pause-input:focus-visible + .hero-pause {
-  outline: 2px solid #a2a897;
-  outline-offset: 2px;
-}
-/* 未チェック=一時停止(❚❚) / チェック済=再生(▶) */
-.hero-pause-icon {
-  width: 0.6rem;
-  height: 0.7rem;
-  border-left: 3px solid currentColor;
-  border-right: 3px solid currentColor;
-}
-.hero-pause-input:checked + .hero-pause .hero-pause-icon {
-  width: 0;
-  height: 0;
-  border: none;
-  border-left: 0.6rem solid currentColor;
-  border-block: 0.38rem solid transparent;
-}
-.hero-pause-text {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.hero-rot-track {
-  order: 1;
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  margin: 0;
+/* ---------- 役割 ---------- */
+.hero-roles {
+  display: grid;
+  gap: 0.5rem;
+  margin: 2rem 0 0;
   padding: 0;
   list-style: none;
-  /* CLS 防止に 2 行分を確保する */
-  min-block-size: 3.5rem;
+  max-width: 46ch;
 }
-@media (max-width: 480px) {
-  .hero-rot-track { min-block-size: 4.75rem; }
-}
-
-.hero-rot-item {
+.hero-role-link {
   display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  text-decoration: none;
   color: #e5e5e0; /* 14.82:1 */
-  font-size: clamp(0.9rem, 2.4vw, 1rem);
+  font-size: clamp(0.95rem, 2.4vw, 1.05rem);
   line-height: 1.7;
 }
-.hero-rot-item::before {
+.hero-role-link::before {
   content: "";
   flex: none;
-  margin-top: 0.55em;
+  align-self: flex-start;
+  margin-top: 0.7em; /* 説明が2行に折り返しても1行目に揃える */
   width: 6px;
   height: 6px;
   background: #a2a897;
   transform: rotate(45deg);
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  .hero-rot-track > .hero-rot-item {
-    position: absolute;
-    inset-inline: 0;
-    inset-block-start: 0;
-    opacity: 0;
-    animation: hero-fade 24s linear infinite; /* 4 件 x 6s */
-  }
-  .hero-rot-track > .hero-rot-item:nth-child(1) { animation-delay: 0s; }
-  .hero-rot-track > .hero-rot-item:nth-child(2) { animation-delay: 6s; }
-  .hero-rot-track > .hero-rot-item:nth-child(3) { animation-delay: 12s; }
-  .hero-rot-track > .hero-rot-item:nth-child(4) { animation-delay: 18s; }
-
-  /* 明示的な停止（SC 2.2.2 を満たす手段） */
-  .hero-pause-input:checked ~ .hero-rot-track > .hero-rot-item { animation-play-state: paused; }
-  /* hover / フォーカス中も止める（W3C WAI カルーセルチュートリアルの要求） */
-  .hero:hover .hero-rot-track > .hero-rot-item,
-  .hero:focus-within .hero-rot-track > .hero-rot-item { animation-play-state: paused; }
+.hero-role-name {
+  flex: none;
+  min-width: 4.5em;
+  font-weight: 600;
+  color: #f4f4f1;
 }
-
-/* 動きを減らす設定では回転せず 4 件を縦に並べる（情報の欠落なし） */
-@media (prefers-reduced-motion: reduce) {
-  .hero-rot { display: block; }
-  .hero-rot-track { display: grid; gap: 0.5rem; min-block-size: 0; }
-  .hero-pause,
-  .hero-pause-input { display: none; }
-}
-
-/* 24s 周期を 4 件で分割し、各件が約 5.3s 表示される。
-   0% を表示状態から始めることで、delay 0 の 1 件目が初回描画から見える
-   （0% を非表示にすると起動直後に 4 件とも消えている区間ができる）。 */
-@keyframes hero-fade {
-  0%, 22% { opacity: 1; }
-  24%, 98% { opacity: 0; }
-  100% { opacity: 1; }
+.hero-role-desc { color: #c9ccc0; /* 11.49:1 */ }
+.hero-role-link:hover .hero-role-name,
+.hero-role-link:hover .hero-role-desc { color: #a2a897; }
+.hero-role-link:focus-visible {
+  outline: 2px solid #a2a897;
+  outline-offset: 2px;
 }
 
 /* ---------- CTA ---------- */
@@ -376,11 +271,6 @@ const categoryLabel = workCategoryLabel
   font-size: 0.9rem;
   font-weight: 600;
 }
-.hero-btn--primary {
-  background: #a2a897;
-  color: #121212; /* 反転で 7.66:1 */
-}
-.hero-btn--primary:hover { background: #8b9179; }
 .hero-btn--ghost {
   border: 1px solid #4d4d4d;
   color: #c9ccc0;

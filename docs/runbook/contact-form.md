@@ -48,5 +48,5 @@ CLI なら公開 URL の HTML に `accounts.google.com/Login` が含まれない
 ## 旧フォーム
 
 2026-09 以前に使っていた公開 ID `1FAIpQLSeHGhQpoV7JmCVTdEwt5RZPtNa0_R-X1dDpyqyLqWyisP8X1w` はオーナー不明
-（7991 の Drive・共有アイテムに無い。旧サイト repo のコミット者 `rito.aither@gmail.com` が有力）。
+（7991 の Drive・共有アイテムに無い。旧サイト repo を作っていた頃の別アカウントが有力）。
 「回答を 1 回に制限する」が ON でログイン必須になっていたため差し替えた。過去の回答はそのフォーム側に残る。

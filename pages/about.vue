@@ -1,9 +1,12 @@
 <template>
     <article class="mx-auto max-w-screen-md px-4 py-10">
+        <!-- 氏名と肩書きを分け、長い肩書きが h1 内で折り返して読みにくくなるのを防ぐ -->
         <h1 class="font-display text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            {{ authorName }} — {{ authorJobTitle }}
+            {{ authorName }}
+            <span class="ml-2 text-base sm:text-lg font-normal text-gray-500 dark:text-gray-400">{{ authorAlternateName }}</span>
         </h1>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ authorArea }}在住 / {{ authorAlternateName }}</p>
+        <p class="mt-3 text-base text-gray-700 dark:text-gray-200">{{ authorJobTitle }}</p>
+        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ authorArea }}在住</p>
 
         <div class="prose max-w-none mt-8">
             <ContentRenderer :value="post" />

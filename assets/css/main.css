@@ -63,8 +63,26 @@
   font-size: 1rem;
 }
 
-.prose > * + * {
-  margin-top: 1.25em;
+/* ContentRenderer は本文を <div> で1枚包むため、`.prose > * + *` のような
+   直下限定セレクタは一度もマッチしない（実サイトで段落間隔が 0px になっていた）。
+   ネスト深さに依存しないよう、ブロック要素自身に上下マージンを持たせる。 */
+.prose :where(p, ul, ol, blockquote, pre, table, figure, iframe, img, hr) {
+  margin-block: 1.25em;
+}
+
+/* リスト項目・引用内の段落は親の間隔に任せる */
+.prose :where(li, blockquote, td, th) > :where(p, ul, ol) {
+  margin-block: 0.4em;
+}
+
+/* 本文の先頭・末尾は外側(mt-8 等)の余白に任せ、二重に空けない */
+.prose :where(div) > :first-child,
+.prose > :first-child {
+  margin-top: 0;
+}
+.prose :where(div) > :last-child,
+.prose > :last-child {
+  margin-bottom: 0;
 }
 
 .prose h2 {

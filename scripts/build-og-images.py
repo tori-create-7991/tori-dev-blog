@@ -16,6 +16,7 @@
 使い方:
     python3 scripts/build-og-images.py          # 変更があった記事だけ生成
     python3 scripts/build-og-images.py --force  # 全記事を再生成
+    python3 scripts/build-og-images.py --default  # 既定 OG 画像(og-default.png)も生成
 
 必要: python3, Pillow (pip install Pillow)
 """
@@ -201,16 +202,41 @@ def render(title: str, category: str, date: str, path: str) -> Image.Image:
     d.rounded_rectangle([margin, foot_y + 14, margin + 64, foot_y + 18], radius=2, fill=accent_rgb)
     foot_font = load_font(24)
     x = margin + 92
-    for part in [p for p in ["tori-dev.com", "利根川 諒", date] if p]:
+    for part in [p for p in ["tori-dev.com", "Ryo Tonegawa", date] if p]:
         d.text((x, foot_y), part, font=foot_font, fill=ACCENT)
         x += foot_font.getbbox(part)[2] + 34
+    return img
+
+
+def render_default() -> Image.Image:
+    """サイト共通の既定 OG 画像(public/og-default.png)。
+    署名は英字表記のみ（漢字氏名は公開しない方針）。"""
+    seed = seed_of("/")
+    img = gradient_layer(seed)
+    d = ImageDraw.Draw(img)
+    margin = 80
+    d.rounded_rectangle([margin - 40, 186, margin - 34, 436], radius=3, fill=ACCENT)
+    d.text((margin + 40, 180), "tori-dev", font=load_font(34), fill=ACCENT)
+    title_font = load_font(56)
+    y = 246
+    for line in ("中小企業の AI 導入・DX を、", "現場に入って伴走する技術顧問"):
+        d.text((margin + 40, y), line, font=title_font, fill=FG)
+        y += int(56 * 1.45)
+    d.text((margin + 40, 436), "Ryo Tonegawa — 長野県", font=load_font(30), fill=MUTED)
+    d.text((margin + 40, 496), "tori-dev.com", font=load_font(26), fill=ACCENT)
     return img
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true", help="全記事を再生成する")
+    ap.add_argument("--default", action="store_true", help="public/og-default.png も生成する")
     args = ap.parse_args()
+
+    if args.default:
+        out = ROOT / "public" / "og-default.png"
+        render_default().save(out, "PNG", optimize=True)
+        print(f"  generated {out.relative_to(ROOT)}")
 
     if not POSTS_DIR.is_dir():
         sys.exit(f"記事ディレクトリが見つかりません: {POSTS_DIR}")
@@ -236,7 +262,7 @@ def main() -> int:
         date = str(fm.get("date", ""))[:10]
 
         # タイトル・カテゴリ・日付・レンダラ設定が同じなら作り直さない
-        sig = hashlib.sha1(f"{title}|{category}|{date}|{route}|v1".encode()).hexdigest()
+        sig = hashlib.sha1(f"{title}|{category}|{date}|{route}|v2".encode()).hexdigest()
         out = OUT_DIR / f"{slug}.png"
         new_state[slug] = sig
         if not args.force and out.exists() and state.get(slug) == sig:

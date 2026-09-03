@@ -1,6 +1,6 @@
 # tori-dev
 
-> 利根川 諒 (Ryo Tonegawa) のブログ＆ポートフォリオ。中小企業のAI導入・DX支援、
+> Ryo Tonegawa (Tori) のブログ＆ポートフォリオ。中小企業のAI導入・DX支援、
 > ERPシステム開発、コーディングブートキャンプ講師の実績を掲載。
 
 ## Pages

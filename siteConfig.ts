@@ -9,7 +9,7 @@ export const siteConfig = {
   defaultImage: "/default.jpg",
   // OGP 既定画像。1200x630 の絶対URLとして出力する（siteUrl と連結）
   defaultOgImage: "/og-default.png",
-  description: '中小企業の AI 導入・DX を月次で。AI エージェント開発と顧問業のブログ＆ポートフォリオ',
+  description: '長野県のフリーランスエンジニア Ryo Tonegawa のブログ＆ポートフォリオ。技術顧問・開発・講師をしています。',
   lang: 'ja',
   locale: 'ja_JP',
   welcomeMessage: "Welcome to tori-dev.",
@@ -51,9 +51,9 @@ export const serviceCategories = [
 export const serviceCategoryLabel = (key) =>
   serviceCategories.find((c) => c.key === key)?.label || key;
 
-export const authorName = "利根川 諒";
-export const authorAlternateName = "Ryo Tonegawa";
-export const authorJobTitle = "フリーランスエンジニア / 中小企業のAI導入・DX顧問";
+export const authorName = "Ryo Tonegawa";
+export const authorAlternateName = "Tori";
+export const authorJobTitle = "フリーランスエンジニア / 技術顧問・開発・講師";
 export const authorArea = "長野県";
 // Person.knowsAbout。エンティティの専門領域を明示する
 export const authorKnowsAbout = [

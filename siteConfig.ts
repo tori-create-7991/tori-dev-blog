@@ -90,6 +90,11 @@ export const sidebarItem = [
     to: "/posts",
   },
   {
+    title: "つぶやき",
+    en: "Feed",
+    to: "/feed",
+  },
+  {
     title: "プロフィール",
     en: "About",
     to: "/about",
@@ -101,14 +106,9 @@ export const sidebarItem = [
   },
 ];
 
-// sitemap 等でヘッダーに出さないページも含めた全体の導線
-export const secondaryItem = [
-  {
-    title: "つぶやき",
-    en: "Feed",
-    to: "/feed",
-  },
-];
+// sitemap 等でヘッダーに出さないページも含めた全体の導線。
+// つぶやき(Feed)は 2026-09 にヘッダー導線(sidebarItem)へ戻したため現在は空
+export const secondaryItem = [];
 
 export const footerItem = [
   {
@@ -129,6 +129,6 @@ export const footerItem = [
 // announcements on/off
 export const announcementsFlag = false
 
-// つぶやき(Feed)を公開するか。0件のうちは false にして noindex + sitemap 除外 + ナビ非表示にする。
-// 元投稿が X / Bluesky 側にある(PESOS)ため、中身のないページを公開してもマイナスにしかならない。
-export const feedPublished = false
+// つぶやき(Feed)を公開するか。false にすると noindex + sitemap 除外 + フッター非表示になる。
+// /feed ページ自体は投稿 0 件の間は feedPublished に関わらず noindex のまま(pages/feed/index.vue)。
+export const feedPublished = true

@@ -43,8 +43,11 @@ export default defineEventHandler(async (event) => {
         : Promise.resolve([]),
     ])
 
+    // /feed は投稿 0 件の間 noindex になる(pages/feed/index.vue)ので、その間は sitemap にも載せない
+    const listedStaticPaths = feed.length ? staticPaths : staticPaths.filter((p) => p !== '/feed')
+
     const urls = [
-      ...staticPaths.map((path) => ({ path, lastmod: null })),
+      ...listedStaticPaths.map((path) => ({ path, lastmod: null })),
       // lastmod は「最後の重要な更新」を表す。updated があればそれを、無ければ公開日を使う
       ...posts.map((p) => ({ path: p.path, lastmod: p.updated || p.date })),
       ...works.map((w) => ({ path: w.path, lastmod: w.date })),

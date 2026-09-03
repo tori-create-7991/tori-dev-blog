@@ -125,6 +125,14 @@ bash scripts/setup_gcp.sh
 | GitHub Secret | 値 |
 |---|---|
 | `DOTENV` | ブログの `.env` 相当の中身（Notion/Google 連携が必要な場合のみ） |
+| `INDEXNOW_KEY` | `public/<key>.txt` のファイル名と同じ文字列。本番デプロイ後の IndexNow 通知（`scripts/submit-indexnow.mjs`）が使う。IndexNow の仕様上このキーは `https://tori-dev.com/<key>.txt` で公開されるため秘匿対象ではない（Secrets 管理は形式的） |
+
+`INDEXNOW_KEY` をローテーションするときは、`public/<新key>.txt` の追加コミットと
+`gh secret set INDEXNOW_KEY --body "<新key>"` を**同時に**行い、旧ファイルを消す。
+片方だけ更新すると IndexNow 側の鍵検証が失敗するが、通知はデプロイを落とさない設計
+（`continue-on-error` + スクリプト側も常に exit 0）なので CI は緑のまま止まる。
+更新後の最初の本番デプロイで `Notify IndexNow` ステップのログに
+`[indexnow] N 件 送信 (HTTP 200/202)` が出ていることを目視で確認する。
 
 GitHub Variables（`vars`）— `setup_gcp.sh` が Secrets と同様に自動登録する:
 

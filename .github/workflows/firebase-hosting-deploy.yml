@@ -143,17 +143,6 @@ jobs:
           firebase target:apply hosting "${TARGET}" "${PROJECT_ID}-${SITE_SUFFIX}" --project "${PROJECT_ID}"
           firebase deploy --only "hosting:${TARGET}" --project "${PROJECT_ID}"
 
-      # IndexNow で更新を通知する（Bing / Yandex / Naver / Seznam / Yep）。
-      # Google は IndexNow 非対応なので sitemap と通常クロールに任せる。
-      # 本番のみ。preview は noindex なので送らない（スクリプト側でも
-      # 本番ドメイン以外はスキップする二重の保険を入れている）
-      - name: Notify IndexNow
-        if: steps.env.outputs.site_env == 'production'
-        env:
-          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
-          NUXT_PUBLIC_SITE_URL: ${{ steps.env.outputs.site_url }}
-        run: npm run submit-indexnow
-
       # デプロイ結果を実際に叩いて確認する。
       # プレビューでは noindex が出ていることまで見る
       - name: Verify deployment
@@ -176,3 +165,21 @@ jobs:
               && echo "robots.txt blocked: OK" \
               || { echo "robots.txt がブロックになっていない"; exit 1; }
           fi
+
+      # IndexNow で更新を通知する（Bing / Yandex / Naver / Seznam / Yep）。
+      # Google は IndexNow 非対応なので sitemap と通常クロールに任せる。
+      #
+      # - Verify deployment の後に置く。健全性が未確認のサイトへ再クロールを
+      #   促さないためと、通知の失敗とデプロイの失敗をログで切り分けるため
+      # - 本番のみ。preview は noindex なので送らない（スクリプト側でも
+      #   NUXT_PUBLIC_SITE_ENV で同じ判定をする二重の保険）
+      # - 通知は補助的な仕組み。失敗してもジョブは落とさず warning に留める
+      - name: Notify IndexNow
+        if: steps.env.outputs.site_env == 'production'
+        continue-on-error: true
+        timeout-minutes: 2
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+          NUXT_PUBLIC_SITE_URL: ${{ steps.env.outputs.site_url }}
+          NUXT_PUBLIC_SITE_ENV: ${{ steps.env.outputs.site_env }}
+        run: npm run submit-indexnow

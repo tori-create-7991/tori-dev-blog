@@ -11,7 +11,8 @@ DNS とカスタムドメインの付け替えを伴うため、**順序を守�
 | `tori-dev.com` | default site `tori-develop`（旧 Nuxt2） | `tori-develop-blog`（新 Nuxt3, main） |
 | `preview.tori-dev.com` | `tori-develop-blog`（新 Nuxt3） | `tori-develop-preview`（新 Nuxt3, preview, noindex） |
 | 旧 Nuxt2 | `tori-dev.com` で配信 | `tori-develop.web.app` に残置（ドメイン紐付けのみ解除） |
-| apex の DNS | 手動 A レコード `199.36.158.100` | **変更しない**（`manage_apex_dns = false`） |
+| apex の A レコード | 手動 `199.36.158.100` | **変更しない**（`manage_apex_dns = false`） |
+| apex の所有権 TXT | `hosting-site=<site_id>` | Terraform 管理（`cloudflare_record.firebase_hosting_ownership`）。旧サイト用の TXT は手動削除が要る |
 
 ## 前提
 
@@ -43,15 +44,40 @@ gh variable list
 
 本番ドメインは手順 4 の直前に設定する。
 
-### 2. apex の DNS は触らない
+### 2. apex の A レコードは触らない。ただし所有権 TXT は必ず要る
 
 `tori-dev.com` の A レコード `199.36.158.100` は **Firebase Hosting の共通 IP** で、
 Firebase は IP ではなく `Host` ヘッダでサイトを振り分ける（実測: レスポンスに
-`vary: x-fh-requested-host`）。したがって **DNS を変更しなくても、
-カスタムドメインの紐付け先を変えるだけで配信内容が切り替わる**。
+`vary: x-fh-requested-host`）。したがって **A レコードは変更しなくてよい**。
 
 A → CNAME への置き換えはタイプ変更のため destroy→create になり、一時的に名前解決が
 落ちる。利点がないので `manage_apex_dns = false`（既定）のままにする。
+
+**ただし A レコードを触らないことと「DNS を触らない」ことは違う。**
+Firebase は apex をどのサイトが持つかを `hosting-site=<site_id>` の TXT レコードで
+判定する。これを直さないとカスタムドメインは `OWNERSHIP_MISMATCH` のまま配信に
+切り替わらない。さらに新旧2本が並ぶと `OWNERSHIP_CONFLICT` になる
+（`CD_CONFLICTING_CLAIMS`: "There must be at most one TXT record with the
+`hosting-site=` prefix on the domain."）。
+
+- 追加する TXT は `cloudflare_record.firebase_hosting_ownership` として Terraform 管理下にある
+- **旧サイト用の TXT（`hosting-site=tori-develop`）は Terraform 導入前の手動レコードで、
+  record id が分からず import できない。Cloudflare API かダッシュボードで手動削除する**
+
+```bash
+# tori-dev-secrets(GCPプロジェクト) のトークンで、旧 TXT だけを内容一致で削除する
+CF_TOKEN=$(gcloud secrets versions access latest --secret=cloudflare-tori-dev-dns-token \
+  --project=tori-dev-secrets --account=ryo.tonegawa@tori-create.org)
+CF_ZONE=$(curl -sS -H "Authorization: Bearer $CF_TOKEN" \
+  "https://api.cloudflare.com/client/v4/zones?name=tori-dev.com" \
+  | python3 -c "import sys,json;print(json.load(sys.stdin)['result'][0]['id'])")
+ID=$(curl -sS -H "Authorization: Bearer $CF_TOKEN" \
+  "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/dns_records?type=TXT&name=tori-dev.com" \
+  | python3 -c "import sys,json;[print(r['id']) for r in json.load(sys.stdin)['result'] \
+      if r['content'].strip('\"')=='hosting-site=tori-develop']")
+curl -sS -X DELETE -H "Authorization: Bearer $CF_TOKEN" \
+  "https://api.cloudflare.com/client/v4/zones/$CF_ZONE/dns_records/$ID"
+```
 
 #### 同一ドメインの付け替えについて
 
@@ -104,6 +130,27 @@ curl -X DELETE -H "Authorization: Bearer $TOKEN" -H "x-goog-user-project: tori-d
 
 外すと `tori-dev.com` は一時的に 404 になる。次の手順 4 の apply で新サイトに
 紐付くまでの数分間が実質的なダウンタイム。
+
+> **実測での注意（2026-09 の切替時に踏んだもの）**
+>
+> 1. **認証は ADC ではなくユーザー認証を使う。**
+>    `gcloud auth application-default print-access-token` は別アカウント
+>    （`good-digital`）を掴んでいて 403 になる。`gcloud auth print-access-token`
+>    （オーナー権限の `ryo.tonegawa.7991@gmail.com`）を使う。
+>    `gcloud config configurations list` でアクティブ設定がずれていないかも見る。
+> 2. **curl には `-f` を付けない。** 付けると HTTP エラーの本文が消えて原因が追えない。
+>    逆にスクリプト内では `-f` が無いと 401 でも終了コード 0 で素通りするため、
+>    ステータスを明示的に検査する。
+> 3. **削除は論理削除。** レスポンスに `deleteTime` と 30 日後の `expireTime` が入る。
+>    その間は旧サイト側に残骸として見える（`?showDeleted=true`）が、配信はしない。
+> 4. **Firebase の DNS 探索結果はキャッシュされる。** TXT を直しても
+>    `requiredDnsUpdates.checkTime` が数十分〜1時間更新されず
+>    `OWNERSHIP_CONFLICT` のままになることがある。
+>    `PATCH .../customDomains/<domain>?updateMask=certPreference` で
+>    同じ値を書き戻すと reconcile が走って解消する。
+> 5. **切替後の 404 は Fastly のエッジキャッシュを疑う。**
+>    オリジンが切り替わっていても `cache-control: max-age=3600` で旧サイトの
+>    応答が最大1時間残る。`?cb=$RANDOM` を付けて `x-cache: MISS` で確認する。
 
 ### 4. main にマージして本番を切り替える（human 承認）
 

@@ -33,3 +33,7 @@ terraform/*.tfstate.*
 terraform/*.tfvars
 !terraform/*.tfvars.example
 terraform/crash.log
+
+# Agent working state (persisted separately: git/.plans/Notion 3層)
+.plans
+.research_output

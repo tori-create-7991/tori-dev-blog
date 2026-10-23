@@ -210,19 +210,14 @@ def render(title: str, category: str, date: str, path: str) -> Image.Image:
 
 def render_default() -> Image.Image:
     """サイト共通の既定 OG 画像(public/og-default.png)。
-    署名は英字表記のみ（漢字氏名は公開しない方針）。"""
+    トップの共有カードにもなるので、氏名・居住地・営業コピーは載せない（個人サイト方針）。"""
     seed = seed_of("/")
     img = gradient_layer(seed)
     d = ImageDraw.Draw(img)
     margin = 80
-    d.rounded_rectangle([margin - 40, 186, margin - 34, 436], radius=3, fill=ACCENT)
-    d.text((margin + 40, 180), "tori-dev", font=load_font(34), fill=ACCENT)
-    title_font = load_font(56)
-    y = 246
-    for line in ("中小企業の AI 導入・DX を、", "現場に入って伴走する技術顧問"):
-        d.text((margin + 40, y), line, font=title_font, fill=FG)
-        y += int(56 * 1.45)
-    d.text((margin + 40, 436), "Ryo Tonegawa — 長野県", font=load_font(30), fill=MUTED)
+    d.rounded_rectangle([margin - 40, 226, margin - 34, 396], radius=3, fill=ACCENT)
+    d.text((margin + 40, 220), "tori-dev", font=load_font(72), fill=FG)
+    d.text((margin + 40, 336), "技術メモ、つぶやき、つくったもの。", font=load_font(36), fill=MUTED)
     d.text((margin + 40, 496), "tori-dev.com", font=load_font(26), fill=ACCENT)
     return img
 

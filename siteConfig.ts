@@ -13,9 +13,6 @@ export const siteConfig = {
   lang: 'ja',
   locale: 'ja_JP',
   welcomeMessage: "Welcome to tori-dev.",
-  // 顧問契約 CTA（リード獲得の主導線）
-  advisoryCtaLabel: "顧問契約のご相談",
-  advisoryPath: "/service/advisory",
 };
 
 // 外部プロフィール。JSON-LD の Person.sameAs とフッターの rel="me" リンクに使う。

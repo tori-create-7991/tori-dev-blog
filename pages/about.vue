@@ -27,9 +27,9 @@
         </section>
 
         <section class="mt-12">
-            <h2 class="font-display text-lg font-semibold text-gray-900 dark:text-white">Contact</h2>
+            <h2 class="font-display text-lg font-semibold text-gray-900 dark:text-white">連絡</h2>
             <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                連絡は<NuxtLink to="/contact" class="text-[#A2A897] hover:underline">こちら</NuxtLink>から。
+                <NuxtLink to="/contact" class="text-[#A2A897] hover:underline">連絡フォーム</NuxtLink>からどうぞ。
             </p>
         </section>
     </article>
@@ -67,7 +67,7 @@ const { profilePageJsonLd, breadcrumbJsonLd, injectJsonLd } = useStructuredData(
 injectJsonLd(profilePageJsonLd())
 injectJsonLd(
     breadcrumbJsonLd([
-        { name: 'Home', path: '/' },
+        { name: 'ホーム', path: '/' },
         { name: 'About', path: '/about' },
     ])
 )

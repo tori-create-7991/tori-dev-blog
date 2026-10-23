@@ -4,6 +4,7 @@ import {
   authorAlternateName,
   authorJobTitle,
   authorArea,
+  authorDescription,
   authorKnowsAbout,
   activeSocialProfiles,
 } from '~/siteConfig'
@@ -59,7 +60,7 @@ export const useStructuredData = () => {
       alternateName: authorAlternateName,
       url: `${siteUrl}/about`,
       jobTitle: authorJobTitle,
-      description: siteConfig.description,
+      description: authorDescription,
       knowsAbout: authorKnowsAbout,
       address: {
         '@type': 'PostalAddress',

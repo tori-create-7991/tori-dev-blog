@@ -52,6 +52,8 @@ export const authorName = "Ryo Tonegawa";
 export const authorAlternateName = "Tori";
 export const authorJobTitle = "エンジニア";
 export const authorArea = "長野県";
+// Person.description。サイト説明ではなく人物の説明を入れる
+export const authorDescription = "AI エージェントと業務システムをつくっているエンジニア。";
 // Person.knowsAbout。エンティティの専門領域を明示する
 export const authorKnowsAbout = [
   "AIエージェント開発",

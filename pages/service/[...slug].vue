@@ -13,11 +13,9 @@
       <ContentRenderer :value="service" />
     </div>
 
-    <div class="mt-8">
-      <UButton to="/contact" color="secondary">
-        お問い合わせ
-      </UButton>
-    </div>
+    <p class="mt-8 text-sm text-gray-600 dark:text-gray-300">
+      連絡は <NuxtLink to="/contact" class="text-[#A2A897] hover:underline">Contact</NuxtLink> から。
+    </p>
   </article>
 </template>
 
@@ -40,8 +38,8 @@ if (!service.value) {
 const categoryLabel = computed(() => serviceCategoryLabel(service.value?.category))
 
 const breadcrumbItems = computed(() => [
-  { name: 'ホーム', path: '/' },
-  { name: 'サービス', path: '/service' },
+  { name: 'Home', path: '/' },
+  { name: 'Service', path: '/service' },
   { name: service.value?.title, path: route.path },
 ])
 

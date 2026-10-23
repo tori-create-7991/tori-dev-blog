@@ -67,7 +67,7 @@ const { profilePageJsonLd, breadcrumbJsonLd, injectJsonLd } = useStructuredData(
 injectJsonLd(profilePageJsonLd())
 injectJsonLd(
     breadcrumbJsonLd([
-        { name: 'ホーム', path: '/' },
+        { name: 'Home', path: '/' },
         { name: 'About', path: '/about' },
     ])
 )

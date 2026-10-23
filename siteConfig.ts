@@ -9,7 +9,7 @@ export const siteConfig = {
   defaultImage: "/default.jpg",
   // OGP 既定画像。1200x630 の絶対URLとして出力する（siteUrl と連結）
   defaultOgImage: "/og-default.png",
-  description: '長野県のフリーランスエンジニア Ryo Tonegawa のブログ＆ポートフォリオ。技術顧問・開発・講師をしています。',
+  description: 'tori-dev の個人サイト。技術ブログ、つぶやき、つくったものを置いています。',
   lang: 'ja',
   locale: 'ja_JP',
   welcomeMessage: "Welcome to tori-dev.",
@@ -53,56 +53,44 @@ export const serviceCategoryLabel = (key) =>
 
 export const authorName = "Ryo Tonegawa";
 export const authorAlternateName = "Tori";
-export const authorJobTitle = "フリーランスエンジニア / 技術顧問・開発・講師";
+export const authorJobTitle = "エンジニア";
 export const authorArea = "長野県";
 // Person.knowsAbout。エンティティの専門領域を明示する
 export const authorKnowsAbout = [
-  "中小企業のAI導入",
-  "DX顧問",
   "AIエージェント開発",
-  "ERPシステム開発",
-  "プログラミング講師",
+  "業務システム開発",
   "Nuxt",
   "TypeScript",
+  "Java",
+  "Python",
 ];
 
 // ヘッダー・フッターのナビゲーション。
-// title=日本語（主）/ en=英語（補助表示）。中小企業の意思決定者に読ませる前提で日本語を主にする。
+// ラベルは英語のみ（日英併記はしない）。個人サイトなので問い合わせ導線はヘッダーに置かない。
 export const sidebarItem = [
   {
-    title: "ホーム",
-    en: "Top",
+    title: "Home",
     to: "/",
   },
   {
-    title: "実績",
-    en: "Works",
-    to: "/works",
-  },
-  {
-    title: "サービス",
-    en: "Service",
-    to: "/service",
-  },
-  {
-    title: "ブログ",
-    en: "Blog",
+    title: "Blog",
     to: "/posts",
   },
   {
-    title: "つぶやき",
-    en: "Feed",
+    title: "Feed",
     to: "/feed",
   },
   {
-    title: "プロフィール",
-    en: "About",
-    to: "/about",
+    title: "Works",
+    to: "/works",
   },
   {
-    title: "ご相談",
-    en: "Contact",
-    to: "/contact",
+    title: "Service",
+    to: "/service",
+  },
+  {
+    title: "About",
+    to: "/about",
   },
 ];
 
@@ -112,16 +100,12 @@ export const secondaryItem = [];
 
 export const footerItem = [
   {
-    title: "プライバシーポリシー等",
+    title: "Privacy Policy",
     to: "/policy",
   },
   {
-    title: "問い合わせ",
+    title: "Contact",
     to: "/contact",
-  },
-  {
-    title: "顧問契約のご相談",
-    to: "/service/advisory",
   },
 ];
 

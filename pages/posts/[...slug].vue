@@ -89,10 +89,10 @@
                 <aside class="mt-16 rounded-lg border border-gray-200 p-5 dark:border-[#333333] dark:bg-[#1a1a1a]">
                     <p class="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">この記事を書いた人</p>
                     <p class="mt-2 font-display text-lg font-semibold text-gray-900 dark:text-white">{{ authorName }}</p>
-                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ authorJobTitle }}（{{ authorArea }}）</p>
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">{{ authorJobTitle }}</p>
                     <div class="mt-4 flex flex-wrap gap-4 text-sm">
-                        <NuxtLink to="/about" class="text-[#A2A897] hover:underline">プロフィール</NuxtLink>
-                        <NuxtLink to="/contact" class="text-[#A2A897] hover:underline">ご相談・お問い合わせ</NuxtLink>
+                        <NuxtLink to="/about" class="text-[#A2A897] hover:underline">About</NuxtLink>
+                        <NuxtLink to="/contact" class="text-[#A2A897] hover:underline">Contact</NuxtLink>
                     </div>
                 </aside>
 
@@ -168,7 +168,7 @@
 
 <script setup>
 import { useFormatDate } from '~/composables/useFormatDate'
-import { authorName, authorJobTitle, authorArea } from '~/siteConfig'
+import { authorName, authorJobTitle } from '~/siteConfig'
 
 const route = useRoute()
 const { formatDate } = useFormatDate()

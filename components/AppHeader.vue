@@ -10,10 +10,9 @@
                     v-for="item in navItems"
                     :key="item.to"
                     :to="item.to"
-                    class="group flex flex-col items-center leading-tight text-gray-700 hover:text-[#A2A897] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A2A897] rounded dark:text-gray-200 dark:hover:text-[#A2A897]"
+                    class="text-sm font-medium text-gray-700 hover:text-[#A2A897] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A2A897] rounded dark:text-gray-200 dark:hover:text-[#A2A897]"
                 >
-                    <span class="text-sm font-medium">{{ item.label }}</span>
-                    <span class="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ item.en }}</span>
+                    {{ item.label }}
                 </NuxtLink>
             </nav>
 
@@ -45,7 +44,6 @@
                     @click="mobileMenuOpen = false"
                 >
                     {{ item.label }}
-                    <span class="ml-2 text-xs uppercase tracking-wider text-gray-400 dark:text-gray-500">{{ item.en }}</span>
                 </NuxtLink>
             </nav>
         </div>
@@ -59,10 +57,8 @@ import { useRoute } from 'vue-router'
 const toolbarTitle = siteConfig.siteTitle
 const mobileMenuOpen = ref(false)
 
-// ラベルは日本語を主、英語を補助表示にする（読者は中小企業の非エンジニア意思決定者）
 const navItems = sidebarItem.map((item) => ({
     label: item.title,
-    en: item.en,
     to: item.to,
 }))
 

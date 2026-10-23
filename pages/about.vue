@@ -5,8 +5,7 @@
             {{ authorName }}
             <span class="ml-2 text-base sm:text-lg font-normal text-gray-500 dark:text-gray-400">{{ authorAlternateName }}</span>
         </h1>
-        <p class="mt-3 text-base text-gray-700 dark:text-gray-200">{{ authorJobTitle }}</p>
-        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ authorArea }}在住</p>
+        <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">{{ authorJobTitle }} / {{ authorArea }}</p>
 
         <div class="prose max-w-none mt-8">
             <ContentRenderer :value="post" />
@@ -28,11 +27,9 @@
         </section>
 
         <section class="mt-12">
-            <h2 class="font-display text-lg font-semibold text-gray-900 dark:text-white">ご相談</h2>
+            <h2 class="font-display text-lg font-semibold text-gray-900 dark:text-white">連絡</h2>
             <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                AI 導入・DX、研修、開発のご相談は
-                <NuxtLink to="/contact" class="text-[#A2A897] hover:underline">お問い合わせ</NuxtLink>
-                から受け付けています。
+                <NuxtLink to="/contact" class="text-[#A2A897] hover:underline">連絡フォーム</NuxtLink>からどうぞ。
             </p>
         </section>
     </article>
@@ -61,8 +58,8 @@ if (!post.value) {
 const socials = activeSocialProfiles()
 
 usePageSeo({
-    title: 'プロフィール',
-    description: `${authorName}（${authorAlternateName}）のプロフィール。${authorArea}在住のフリーランスエンジニア。中小企業の AI 導入・DX 支援、ERP 開発、プログラミング講師。`,
+    title: 'About',
+    description: `${authorName}（${authorAlternateName}）について。${authorArea}のエンジニア。`,
 })
 
 // ProfilePage + Person。Person 実体はサイト全体で共有し @id で参照する
@@ -71,7 +68,7 @@ injectJsonLd(profilePageJsonLd())
 injectJsonLd(
     breadcrumbJsonLd([
         { name: 'ホーム', path: '/' },
-        { name: 'プロフィール', path: '/about' },
+        { name: 'About', path: '/about' },
     ])
 )
 </script>

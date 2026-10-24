@@ -26,6 +26,13 @@ logs
 public_dev
 _local-folder
 
+# コンテンツの下書き（公開リポジトリなので git に載せない。README だけ管理する）
+# ADR 0004 改訂節参照
+content/posts/drafts/*
+!content/posts/drafts/README.md
+content/feed/drafts/*
+!content/feed/drafts/README.md
+
 # Terraform
 terraform/.terraform
 terraform/*.tfstate

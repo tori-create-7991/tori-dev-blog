@@ -46,3 +46,43 @@ RSS・sitemap のいずれにも出現しない）。この挙動は `nuxt build
   将来サイト内検索等で使い始めると `**/*.md` は `drafts/` 配下も再帰的に
   拾ってしまう（`posts`/`feed` コレクションの `posts/*.md` とは異なりパス
   区切りをまたぐ）。使い始める際はこの分離が効かないことを踏まえる
+
+## 改訂（2026-10-24）: 下書きを git 管理外にし、汎用コレクションからも除外する
+
+上の Consequences で懸念していた「汎用 `content` コレクションが `drafts/` も拾う」問題は、
+使い始める前から実害があった。@nuxt/content v3 はページから参照されていないコレクションも
+SQL ダンプ（`/__nuxt_content/<collection>/sql_dump.html`）として静的出力に含めるため、
+`drafts/` に置いた `.md` は本番サイトからダウンロードできる状態だった（手元ビルドで確認）。
+また、このリポジトリは公開なので、git 管理下の下書きは push した時点でレビュー前に公開される
+（下書きを入れたブランチが PR として公開状態になっていた）。
+
+変更点:
+
+- `content.config.ts` の `content` コレクションを
+  `source: { include: '**/*.md', exclude: ['**/drafts/**'] }` にする
+- `.gitignore` で `content/{posts,feed}/drafts/*` を git 管理外にする（各 `README.md` だけ管理）
+- `npm run check-drafts`（`scripts/check-no-drafts-in-build.mjs`）でビルド出力の全 SQL ダンプを
+  展開し、`/drafts/` を含むパスが無いことを確認できるようにする
+
+これに伴い Decision の運用を次のように読み替える:
+
+- 下書きは git 管理外。差分・履歴は残らない（「下書きも git 管理下にあるため差分・履歴が残る」は撤回）
+- 公開は `git mv` ではなく、親ディレクトリへ `mv` してから `git add` する
+- コレクションを追加・変更するときは `npm run generate && npm run check-drafts` で漏れが無いか確認する
+
+既存の公開 PR に含まれている下書き（履歴に残ったもの）はこの改訂の対象外。
+
+運用上の注意:
+
+- 下書きは書き出したマシンの primary checkout（`~/Repo/my/tori-dev-blog`）にしか存在しない。
+  git のバックアップが効かないので、`git clean -x` / `-X` を primary で実行しない
+- worktree には ignore されたファイルが引き継がれない。worktree で公開作業をするときは、
+  primary の `drafts/` から worktree の `content/posts/` へ `mv` してから `git add` する
+
+残っているリスク（この改訂では対応しない）:
+
+- Instagram 下書きの画像（[0005](0005-feed-draft-file-convention.md) の `public/feed/<slug>.png`）は
+  `public/` 配下のため gitignore の対象外で、commit すれば公開リポジトリと本番の両方に出る。
+  置き場を drafts 側に移すには書き出し側スキル（00_my_env の image-sns-writer）の変更が要るので別タスクにする。
+  それまでは下書き段階の画像を commit しない
+- `npm run check-drafts` はまだ CI（デプロイ前）に組み込んでいない。`.github/workflows` の変更として別 PR で入れる

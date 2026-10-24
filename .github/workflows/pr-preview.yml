@@ -1,0 +1,148 @@
+# PR ごとのビルド確認とプレビュー。
+#
+#   build    すべての PR でビルドする（必須チェック "build"）。
+#            同じリポジトリからの PR なら、検証サイトのチャネル pr-<番号> へ配信し、URL を PR にコメントする。
+#   cleanup  PR を閉じたらチャネルを削除する（残っても 7 日で消える）。
+#
+# フォークや Dependabot の PR では OIDC トークンが発行されないので、ビルドの確認だけになる。
+# pull_request_target は使わない（公開リポジトリでフォークのコードに権限を渡さないため）。
+name: pr-preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions: {}
+
+# 同じ PR の古いビルドは止める。PR を閉じたときの cleanup はビルドと別のグループにして止めない。
+concurrency:
+  group: pr-preview-${{ github.event.pull_request.number }}-${{ github.event.action == 'closed' && 'cleanup' || 'build' }}
+  cancel-in-progress: ${{ github.event.action != 'closed' }}
+
+jobs:
+  build:
+    name: build
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: pr-preview
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      PREVIEW_SITE_ID: ${{ vars.PREVIEW_SITE_ID }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Check whether preview can be deployed
+        id: can
+        env:
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          if [ "$HEAD_REPO" = "$GITHUB_REPOSITORY" ] && [ "$ACTOR" != "dependabot[bot]" ] && [ -n "$PREVIEW_SITE_ID" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "### プレビューは配信していません（ビルドの確認だけ）" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate OG images
+        run: |
+          python3 -m pip install --quiet --user Pillow
+          npm run generate-og
+
+      # 検証用の設定でビルドする。全ページに noindex が付き、robots.txt も全面ブロックになる。
+      - name: Generate static site
+        env:
+          NUXT_PUBLIC_SITE_URL: ${{ vars.PREVIEW_SITE_ID && format('https://{0}.web.app', vars.PREVIEW_SITE_ID) || 'https://example.invalid' }}
+          NUXT_PUBLIC_SITE_ENV: preview
+        run: npm run generate
+
+      - name: Check drafts are not in the build
+        run: npm run check-drafts
+
+      - if: steps.can.outputs.deploy == 'true'
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.PREVIEW_SA }}
+
+      - name: Deploy to preview channel
+        if: steps.can.outputs.deploy == 'true'
+        id: deploy
+        run: |
+          npx firebase target:apply hosting preview "$PREVIEW_SITE_ID" --project "$GCP_PROJECT_ID"
+          npx firebase hosting:channel:deploy "pr-${PR_NUMBER}" --only preview --expires 7d \
+            --project "$GCP_PROJECT_ID" --json > "$RUNNER_TEMP/channel.json"
+          # result のキーは firebase.json のターゲット名（preview）。ターゲットは 1 つだけなので先頭を取る
+          url=$(jq -r '[.result[]][0].url // empty' "$RUNNER_TEMP/channel.json")
+          expire=$(jq -r '[.result[]][0].expireTime // empty' "$RUNNER_TEMP/channel.json")
+          [ -n "$url" ] || { cat "$RUNNER_TEMP/channel.json"; echo "::error::プレビュー URL を取得できません"; exit 1; }
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "expire=$expire" >> "$GITHUB_OUTPUT"
+          echo "### プレビュー: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment preview URL on PR
+        if: steps.can.outputs.deploy == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+          PREVIEW_EXPIRE: ${{ steps.deploy.outputs.expire }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        with:
+          script: |
+            const marker = '<!-- pr-preview -->';
+            const text = `${marker}\n### プレビュー\n\n${process.env.PREVIEW_URL}\n\n- コミット: ${process.env.HEAD_SHA.slice(0, 7)}\n- 期限: ${process.env.PREVIEW_EXPIRE}（PR を閉じると削除）\n- noindex（検索エンジンには載らない）`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const mine = comments.find(c => c.user.login === 'github-actions[bot]' && c.body.includes(marker));
+            if (mine) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: mine.id, body: text });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body: text });
+            }
+
+  cleanup:
+    name: cleanup
+    if: >-
+      github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    environment: pr-preview
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      PREVIEW_SITE_ID: ${{ vars.PREVIEW_SITE_ID }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.PREVIEW_SA }}
+
+      # npm ci を省くため、package.json で固定したバージョンの firebase-tools を直接使う
+      - name: Delete preview channel
+        run: |
+          version=$(jq -r '.devDependencies["firebase-tools"]' package.json)
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::firebase-tools のバージョンが固定値ではありません: $version"; exit 1; }
+          npx --yes "firebase-tools@${version}" hosting:channel:delete "pr-${PR_NUMBER}" \
+            --site "$PREVIEW_SITE_ID" --project "$GCP_PROJECT_ID" --force \
+            || echo "::warning::チャネル pr-${PR_NUMBER} を削除できませんでした（既に期限切れなら問題なし。7 日で自動的に消える）"

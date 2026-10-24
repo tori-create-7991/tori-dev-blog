@@ -1,0 +1,6 @@
+# terraform.tfvars のひな形。フォークしたら値を書き換えて terraform.tfvars として保存する。
+project_id          = "your-gcp-project-id"
+region              = "asia-northeast1"
+prod_site_suffix    = "blog"
+preview_site_suffix = "preview"
+custom_domain       = "" # 独自ドメインを使わないなら空のまま（*.web.app で配信）

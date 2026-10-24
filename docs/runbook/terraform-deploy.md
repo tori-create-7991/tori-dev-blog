@@ -1,195 +1,102 @@
-# Runbook: Terraform / Firebase Hosting 初回デプロイ
+# Runbook: Terraform とデプロイの運用
 
-このリポジトリの Terraform / GitHub Actions は用意済みだが、実際の GCP
-リソース作成・GitHub Secrets 設定・DNS 変更は **GCP・Cloudflare の認証情報を
-保有するユーザー自身が実行する**。以下の手順に沿って進める。
+2 段構成（[ADR 0006](../adr/0006-two-stage-terraform.md)）になってからの日常の運用手順。
+ゼロから構築する手順は [docs/setup/fork.md](../setup/fork.md)、2026-10 の移行は
+[iac-two-stage-migration.md](iac-two-stage-migration.md)。
 
-> **既知の実インシデント（2026-07-22）**: `terraform/providers.tf` の GCS
-> backend prefix が当初 `terraform/blog` という汎用名だったため、同一 GCS
-> バケット（`tori-develop-tfstate`）を共有していた旧 Nuxt3 ブログリポジトリ
-> （`012_nuxt-07_nuxt3_toriblog`、`tori-dev.com` 本番運用中）の state と衝突。
-> `terraform apply` が旧リポジトリの稼働中リソース（Service Account の
-> project-level IAMロール9個、WIF Provider、Artifact Registry）を「別名への
-> リネーム」と誤認識し、破壊 → 再作成した。手動でIAMロール再付与・WIF
-> Provider undelete・Artifact Registry再作成（中身のDockerイメージは復元
-> 不可）で復旧。再発防止として prefix を `terraform/tori-dev-blog` に変更
-> 済み（[terraform/providers.tf](../../terraform/providers.tf)）。
-> **同一GCPプロジェクトを複数リポジトリで共有する場合、GCS state prefixに
-> リポジトリ名をフルで含めること。「terraform/blog」のような汎用名は禁止。**
+## 何がどこで動くか
 
-> **既知の実インシデント（2026-07-23）**: PR #1 マージ後、CIが初回
-> `terraform apply` を実行した際、GitHub Variable `CUSTOM_DOMAIN` が
-> 未登録だったため `vars.CUSTOM_DOMAIN || ''` が空文字にフォールバック。
-> `custom_domain != "" ? 1 : 0` を条件にした `cloudflare_record` /
-> `google_firebase_hosting_custom_domain` が「不要」と判定され、稼働中の
-> `preview.tori-dev.com` の DNS レコード・カスタムドメインが destroy
-> された（`setup_gcp.sh` は GitHub **Secrets** だけ自動登録し、
-> **Variables** は手動設定の想定のまま実際には登録し忘れていた）。
-> `gh variable set CUSTOM_DOMAIN` で登録後、ワークフロー再実行で復旧。
-> 再発防止として `setup_gcp.sh` が `FIREBASE_SITE_SUFFIX` /
-> `CLOUDRUN_SERVICE_NAME` / `CUSTOM_DOMAIN` の GitHub Variables も
-> Secrets と同様に自動登録するようにした。
-> **Secrets と Variables は別画面・別APIなので、片方だけ自動化して
-> 「初期構築完了」と判断しないこと。特に空文字がデフォルト値として
-> 安全に倒れない（=リソースが消える方向に倒れる）変数は要注意。**
-
-関連: `docs/design/terraform-firebase-hosting-migration.md`,
-`docs/adr/0001-reuse-gcp-project-new-hosting-site.md`
-
-## 前提
-
-- GCP project `tori-develop` へのオーナー/編集者権限
-- `gcloud` CLI ログイン済み（`gcloud auth login`）
-- `terraform` CLI インストール済み
-- GitHub リポジトリ `tori-create-7991/tori-dev-blog` への admin 権限
-  （Secrets/Variables 設定のため）
-- カスタムドメイン設定時のみ: GCP project `tori-dev-secrets`
-  （組織 `tori-create.org` / 請求先 `tori-dev`）の secret
-  `cloudflare-tori-dev-dns-token` への `secretmanager.secretAccessor` 権限
-  （`cloudflare-tori-dev-deploy-token` は現構成では未使用）
-  - `tori-develop`（本体プロジェクト）と `tori-dev-secrets` の権限アカウントが
-    異なるテナントの場合、組織ポリシーでIAMをアカウント間共有できないことが
-    ある。その場合は両アカウントを個別に `gcloud auth login` しておき、
-    `SECRET_ACCOUNT` 環境変数で `tori-dev-secrets` 側アカウントを指定する
-    （下記手順2参照）
-
-## 手順
-
-### 1. GCS backend 用バケットの確認・作成
-
-Terraform state を保存する GCS バケットが必要（`terraform/providers.tf` の
-`backend "gcs" { prefix = "terraform/tori-dev-blog" }`）。
-
-```bash
-# 既存バケットがあるか確認（旧 012_nuxt-07_nuxt3_toriblog の tori-dev ブランチ
-# で使っていたバケットを流用できるか要確認）
-gsutil ls -p tori-develop
-
-# 無ければ新規作成
-gsutil mb -p tori-develop -l asia-northeast1 gs://<バケット名>
-```
-
-バケット名を控えておく（後で GitHub Secret `GCP_TF_STATE_BUCKET` に設定）。
-
-### 2. GCP 初期セットアップスクリプトを実行
-
-```bash
-cd tori-dev-blog
-bash scripts/setup_gcp.sh
-```
-
-対話式で以下を入力（環境変数で事前指定も可）:
-
-```bash
-export PROJECT_ID="tori-develop"
-export GH_REPO="tori-create-7991/tori-dev-blog"
-# tori-develop と tori-dev-secrets の権限アカウントが別テナントの場合のみ:
-# export SECRET_ACCOUNT="tori-develop側とは別の、tori-dev-secretsにアクセスできるアカウント"
-# カスタムドメインは今回のスコープ外のため空のままでよい
-# export CUSTOM_DOMAIN=""
-bash scripts/setup_gcp.sh
-```
-
-このスクリプトは冪等（既存リソースがあれば import、無ければ新規作成）。
-実行後、以下が GCP 側に作成される:
-
-- WIF Pool `github-pool`（既存なら再利用）
-- WIF Provider `tori-dev-blog-provider`（このリポジトリ専用）
-- Service Account `github-actions-tori-blog`
-- 必要な IAM ロール付与
-
-スクリプト完了時、`gh` CLI がログイン済み・対象リポジトリへの admin
-権限があれば以下の Secret を **自動登録**する（`gh secret set`）:
-
-| GitHub Secret | 値 |
-|---|---|
-| `WIF_PROVIDER` | スクリプト出力の `wif_provider` |
-| `GCP_SA_EMAIL` | スクリプト出力の `sa_email` |
-| `GCP_PROJECT_ID` | `tori-develop` |
-| `GCP_TF_STATE_BUCKET` | 手順1で確認したバケット名 |
-| `CLOUDFLARE_API_TOKEN` | `CUSTOM_DOMAIN` 設定時のみ。GCP Secret Manager (project `tori-dev-secrets`, secret `cloudflare-tori-dev-dns-token`) から自動取得 |
-| `CLOUDFLARE_ZONE_ID` | `CUSTOM_DOMAIN` 設定時のみ。取得したトークンで Cloudflare API を叩いて自動導出 |
-
-`gh` 未検出・未認証の場合は登録コマンド例を標準出力するので、手動で実行する。
-`CLOUDFLARE_API_TOKEN` の Secret Manager 取得に失敗した場合（権限不足・secret名不一致）は手動入力にフォールバックする。
-
-`cloudflare-tori-dev-deploy-token` は現構成では未使用（配線しない）。
-**TODO（将来検討）**: Cloudflare Pages/Workers 等、DNS操作を伴わないデプロイ系
-タスクを追加する際に使う想定で残置。使う段になったら、このスクリプトの
-`CLOUDFLARE_DNS_TOKEN_SECRET` と同様に別変数（例:
-`CLOUDFLARE_DEPLOY_TOKEN_SECRET`）で `gcloud secrets versions access` させ、
-用途に応じた最小権限の GitHub Secret として登録する。
-
-以下は自動登録の対象外（別途手動で設定）:
-
-| GitHub Secret | 値 |
-|---|---|
-| `DOTENV` | ブログの `.env` 相当の中身（Notion/Google 連携が必要な場合のみ） |
-| `INDEXNOW_KEY` | `public/<key>.txt` のファイル名と同じ文字列。本番デプロイ後の IndexNow 通知（`scripts/submit-indexnow.mjs`）が使う。IndexNow の仕様上このキーは `https://tori-dev.com/<key>.txt` で公開されるため秘匿対象ではない（Secrets 管理は形式的） |
-
-`INDEXNOW_KEY` をローテーションするときは、`public/<新key>.txt` の追加コミットと
-`gh secret set INDEXNOW_KEY --body "<新key>"` を**同時に**行い、旧ファイルを消す。
-片方だけ更新すると IndexNow 側の鍵検証が失敗するが、通知はデプロイを落とさない設計
-（`continue-on-error` + スクリプト側も常に exit 0）なので CI は緑のまま止まる。
-更新後の最初の本番デプロイで `Notify IndexNow` ステップのログに
-`[indexnow] N 件 送信 (HTTP 200/202)` が出ていることを目視で確認する。
-
-GitHub Variables（`vars`）— `setup_gcp.sh` が Secrets と同様に自動登録する:
-
-| Variable | 値 | 備考 |
+| | 中身 | 誰がいつ apply するか |
 |---|---|---|
-| `FIREBASE_SITE_SUFFIX` | `blog` | site_id = `tori-develop-blog` |
-| `CLOUDRUN_SERVICE_NAME` | `tori-dev-blog` | 未使用（`deploy_target=firebase`） |
-| `CUSTOM_DOMAIN` | `setup_gcp.sh` 実行時の `$CUSTOM_DOMAIN` 環境変数の値 | **空のまま実行すると登録されない**。この状態で `main` が push されると CI は `custom_domain=""` で apply し、DNSレコード/カスタムドメインを destroy する（上記2026-07-23インシデント参照）。カスタムドメイン運用時は必ず `CUSTOM_DOMAIN` を設定してから `setup_gcp.sh` を実行すること |
+| `terraform/bootstrap/` | API、tfstate バケット、WIF Pool・Provider、CI 用 SA と権限、Cloudflare DNS、GitHub の Variables・Environment・ruleset | 人がローカルで、変えるときだけ |
+| `terraform/app/` | Firebase Hosting の本番・検証サイト、本番の独自ドメイン | CI が main への push で（`terraform.yml`） |
+| サイトの中身 | Nuxt のビルド結果 | CI が main への push で、`terraform.yml` の apply が成功したあと本番へ（`deploy.yml`）。PR ごとにプレビューへ（`pr-preview.yml`） |
 
-### 2.5. GitHub Environment（承認ゲート）の設定
+CI は GitHub Secrets を使わない。値はすべて bootstrap が登録する Variables から読む。
 
-`.github/workflows/firebase-hosting-deploy.yml` の `deploy` job は
-`environment: production` を参照する。`main` への push だけで
-`terraform apply -auto-approve` が本番GCPリソースを変更してしまうため
-（過去に state 衝突で他リポジトリの本番リソースを誤破壊したインシデントの
-教訓）、reviewer 承認を挟みたい場合は以下を GitHub の Web UI で設定する
-（ワークフローYAML単体では有効化されない）:
+| CI 用 SA | 使える条件 | 権限 |
+|---|---|---|
+| `gha-tori-dev-blog-deployer` | main ブランチ上で Environment `production` を指定したジョブ | Hosting の管理、app stack の state の読み書き |
+| `gha-tori-dev-blog-preview` | PR | Hosting の管理（プレビューチャネルへの配信に使う） |
+| `gha-tori-dev-blog-planner` | このリポジトリの全ワークフロー | 読み取り、app stack の state の読み取り |
 
-1. リポジトリ `Settings > Environments > New environment` で `production` を作成
-2. `Required reviewers` にレビュー担当者を追加
-3. 必要に応じて `Deployment branches` を `main` のみに制限
-
-設定しない場合、承認なしで即 apply される（現状の挙動と同じ）。
-
-### 3. GitHub Actions を実行
-
-`main` ブランチに push するか、`workflow_dispatch` で手動実行:
+## 共通の準備（ローカルで Terraform を実行するとき）
 
 ```bash
-gh workflow run firebase-hosting-deploy.yml
+export GOOGLE_OAUTH_ACCESS_TOKEN="$(gcloud auth print-access-token --account=ryo.tonegawa.7991@gmail.com)"
+export GITHUB_TOKEN="$(gh auth token)"                   # bootstrap のみ
+export CF_ISSUER_ACCOUNT=ryo.tonegawa.7991@gmail.com      # bootstrap で DNS を扱うとき
 ```
 
-ワークフローが以下を実行する:
+apply は main を最新にしてから実行する。PR のブランチから apply すると、main にない状態が本番に入る。
 
-1. WIF 認証
-2. `terraform init` / `terraform apply`（Firebase Hosting サイト `tori-develop-blog` を新規作成）
-3. Nuxt3 SSG ビルド（`npm run generate`）
-4. `firebase deploy --only hosting:blog`
+## app を変える（Hosting・ドメイン）
 
-### 4. 動作確認
+1. `terraform/app/` を変えて PR を出す。CI が plan を PR にコメントする。
+2. plan を確認してマージする。CI が apply する。
+
+ローカルで plan だけ見たいとき:
 
 ```bash
-curl -I https://tori-develop-blog.web.app
+mise exec -- terraform -chdir=terraform/app init -backend-config=backend.hcl
+mise exec -- terraform -chdir=terraform/app plan
 ```
 
-`200` が返れば成功。**この時点では tori-dev.com の DNS には一切触れていない**
-ため、現行の旧 Nuxt2 サイトは無停止のまま。
+## bootstrap を変える（権限・DNS・GitHub 設定）
 
-### 5. カスタムドメイン切替（このタスクのスコープ外・別途判断）
+1. `terraform/bootstrap/` を変え、ローカルで plan を実行して結果を PR の本文に貼る。
+2. マージしたら main を最新にして apply する。
 
-新サイトの内容を確認して問題なければ、以下を検討する（本 runbook は準備
-のみで、実行判断・実施は別セッションで行う）:
+```bash
+git switch main && git pull
+mise exec -- terraform -chdir=terraform/bootstrap init -backend-config=backend.hcl
+scripts/with-cloudflare-token.sh -- mise exec -- terraform -chdir=terraform/bootstrap plan -out=tfplan
+scripts/with-cloudflare-token.sh -- mise exec -- terraform -chdir=terraform/bootstrap apply tfplan
+```
 
-- Firebase Console から `tori-develop-blog` サイトにカスタムドメイン
-  `tori-dev.com` を追加
-- DNS レコード（Cloudflare）を新サイト向けに更新
-- 旧 default サイト（Nuxt2）の扱いを決める（削除 / 別ドメインで保持 等）
+`scripts/with-cloudflare-token.sh` は、tori-dev-secrets の発行用トークン（`cloudflare-tori-dev-deploy-token`、
+User API Tokens: Edit 権限）を使って、tori-dev.com だけを編集できる有効期限 1 時間のトークンを発行し、
+コマンドが終わったら削除する。DNS に触れない変更でも、bootstrap の plan には Cloudflare の読み取りが入るので使う。
 
-**注意**: この手順は本番ドメインへの影響が大きいため、実行前に必ず
-バックアップ・ロールバック手順を確認すること。
+## チェックが失敗したとき
+
+| 失敗 | 対応 |
+|---|---|
+| PR の `plan` | plan の出力（PR のコメントか Actions のログ）を見る。認証エラーなら Variables と SA の binding を bootstrap の plan で確認 |
+| PR の `build` | ビルドのログを見る。`check-drafts` の失敗は下書きがビルドに混ざっている（ADR 0004） |
+| 毎週の `drift` | 本番の Hosting 設定がコードとずれている。Console での手作業を探し、コードに取り込むか main から apply して戻す |
+| main の `deploy` の疎通確認 | Firebase Console のリリース履歴から前のバージョンに戻す（DNS は触らない） |
+| main の `terraform` の apply（`deploy` が動かない） | 配信は apply の成功後にしか動かない。原因を直すのが先だが、記事の公開だけ急ぐなら `gh workflow run deploy -R tori-create-7991/tori-dev-blog --ref main` で配信だけ実行できる |
+
+## 定期的にやること
+
+- **月に 1 回、bootstrap の plan を実行する**（上の手順の plan まで）。CI のズレ検知は app（Hosting）だけを見ていて、DNS・SA・GitHub 設定のズレには気づけない。差分が出たら原因を調べ、コードに取り込むか apply で戻す。
+- **失敗の通知はメール**。GitHub Actions の失敗は、ワークフローを最後に編集した人（スケジュール実行は cron を最後に変えた人）にメールで届く。週 1 回の `drift` の失敗もここで気づく。公開リポジトリで 60 日間コミットが無いとスケジュール実行が止まるので、そのときは Actions 画面から有効にし直す。
+
+## フォークと Dependabot の PR
+
+GCP に認証できないので、plan とプレビューは動かずビルドの確認だけになる。
+`terraform/` に触れない PR では、必須チェック `plan` は成功扱いになる。`terraform/` に触れる PR（Dependabot の provider 更新など）では
+`plan` が失敗するので、ローカルで plan を確認してから、管理者として保護を無視してマージする（`gh pr merge <番号> --merge --admin`）。
+
+## 受け入れているリスク（既知の制約）
+
+| 制約 | 理由・対策 |
+|---|---|
+| 発行用の Cloudflare トークン（User API Tokens: Edit）は、実質 Cloudflare アカウント全体の権限を持つ | 短命トークンを作るための元の鍵として必要。tori-dev-secrets の Secret Manager で保管し、読めるのは自分のアカウントだけにする |
+| preview SA でも本番サイトへ配信できる | Hosting の権限はプロジェクト単位でしか付けられない。使えるのはこのリポジトリからの PR だけで、PR を作れるのは書き込み権限のある人だけ |
+| deployer SA は app stack の state の古い世代も消せる | ロックファイルの削除に同じ権限が要るため分けられない。古い世代は 10 世代または 90 日まで残る |
+| CSP に `'unsafe-inline'`・`'unsafe-eval'` が残っている | Nuxt の静的出力がインラインスクリプトを使うため。外すのは別タスク |
+| HSTS に `includeSubDomains` を付けている | tori-dev.com のサブドメインはすべて HTTPS で配信する前提。HTTPS でないサブドメインを作るときは外す |
+
+## 過去の事故（再発防止の理由）
+
+> **2026-07-22: state の prefix の衝突**。GCS backend の prefix が `terraform/blog` という汎用名で、同じバケットを
+> 使っていた旧 Nuxt3 ブログ（`012_nuxt-07_nuxt3_toriblog`）の state と衝突した。apply が旧リポジトリの
+> SA の権限・WIF Provider・Artifact Registry を壊した。→ prefix にはリポジトリ名をフルで含める（命名ルール
+> `gcp-ci-identity-naming`）。CI 用 SA の tfstate の権限は IAM Condition で app stack の state だけに絞っている。
+
+> **2026-07-23: Variables の登録漏れで本番が消えた**。`CUSTOM_DOMAIN` が未登録で空文字になり、
+> 「独自ドメインなし」と判定されて preview.tori-dev.com の DNS とカスタムドメインが destroy された。
+> → Variables は bootstrap が Terraform で登録する。空文字が「リソースを消す」方向に倒れる変数は、
+> CI からは渡さず tfvars に置く（app stack は CI から変数を受け取らない）。

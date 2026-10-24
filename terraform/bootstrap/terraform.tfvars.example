@@ -1,0 +1,23 @@
+# terraform.tfvars のひな形。フォークしたら値を書き換えて terraform.tfvars として保存する。
+# 手順は docs/setup/fork.md。
+project_id   = "your-gcp-project-id"
+region       = "asia-northeast1"
+github_owner = "your-github-user"
+github_repo  = "tori-dev-blog"
+repo_slug    = "tori-dev-blog" # リポジトリ名を小文字にし _ と . を - にしたもの
+
+tf_state_bucket          = "your-gcp-project-id-tfstate" # 手順書の gcloud コマンドで作ったバケット
+tf_state_bucket_location = "ASIA-NORTHEAST1"
+app_state_prefix         = "terraform/tori-dev-blog" # terraform/app/backend.hcl と同じ
+
+prod_site_suffix    = "blog"
+preview_site_suffix = "preview"
+custom_domain       = "" # 独自ドメインを使わないなら空のまま
+indexnow_key        = "" # IndexNow を使うなら public/<key>.txt と同じ文字列
+
+enable_cloudflare  = false # 独自ドメインの DNS を Cloudflare で管理するなら true
+cloudflare_zone_id = ""
+
+existing = {
+  import_state_bucket = true # 手順書どおり gcloud でバケットを作った場合は true
+}

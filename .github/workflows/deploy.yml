@@ -1,0 +1,112 @@
+# 本番サイトへの配信。main への push で terraform.yml の apply が成功したあとに動く
+# （Hosting の変更が先に反映されてから配信するため）。手動実行もできる。
+# インフラの変更は terraform.yml が行う。ここは Hosting への配信だけ。
+# 値はすべて GitHub Variables（bootstrap stack が登録）から読む。Secrets は使わない。
+name: deploy
+
+on:
+  workflow_run:
+    workflows: [terraform]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy
+    if: >-
+      github.ref == 'refs/heads/main' && (
+        github.event_name == 'workflow_dispatch' || (
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.head_repository.full_name == github.repository
+        )
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      PROD_SITE_ID: ${{ vars.PROD_SITE_ID }}
+      PROD_SITE_URL: ${{ vars.PROD_SITE_URL }}
+    steps:
+      # workflow_run のときは、apply したのと同じコミットを配信する
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # OGP 画像（1200x630 PNG）を記事タイトルから生成する。生成済みの PNG はコミットされているので、
+      # 記事の追加・改題があった分だけ作られる。
+      - name: Generate OG images
+        run: |
+          python3 -m pip install --quiet --user Pillow
+          npm run generate-og
+
+      - name: Generate static site
+        env:
+          NUXT_PUBLIC_SITE_URL: ${{ env.PROD_SITE_URL }}
+          NUXT_PUBLIC_SITE_ENV: production
+        run: npm run generate
+
+      - name: Check drafts are not in the build
+        run: npm run check-drafts
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOYER_SA }}
+
+      - name: Deploy to Firebase Hosting
+        run: |
+          npx firebase target:apply hosting blog "$PROD_SITE_ID" --project "$GCP_PROJECT_ID"
+          npx firebase deploy --only hosting:blog --project "$GCP_PROJECT_ID" --non-interactive
+
+      # 配信結果を実際に取得して確認する
+      - name: Verify deployment
+        run: |
+          echo "checking ${PROD_SITE_URL}"
+          ok=false
+          for i in 1 2 3; do
+            CODE=$(curl -sS -m 20 -o /dev/null -D /tmp/headers.txt -w '%{http_code}' "${PROD_SITE_URL}/" || echo 000)
+            if [ "$CODE" = "200" ] && grep -qi '^content-security-policy:' /tmp/headers.txt; then
+              ok=true
+              break
+            fi
+            echo "  attempt ${i}: HTTP ${CODE}（CSP ヘッダーも確認）, retrying..."
+            sleep 10
+          done
+          if [ "$ok" != "true" ]; then
+            echo "::error::本番が HTTP 200 と Content-Security-Policy ヘッダーを返しません（最後の HTTP ${CODE}）"
+            exit 1
+          fi
+          echo "HTTP 200, security headers: OK"
+
+      # IndexNow で更新を通知する（Bing / Yandex / Naver / Seznam / Yep）。
+      # 通知は補助的な仕組みなので、失敗してもジョブは落とさない。
+      - name: Notify IndexNow
+        if: vars.INDEXNOW_KEY != ''
+        continue-on-error: true
+        timeout-minutes: 2
+        env:
+          INDEXNOW_KEY: ${{ vars.INDEXNOW_KEY }}
+          NUXT_PUBLIC_SITE_URL: ${{ env.PROD_SITE_URL }}
+          NUXT_PUBLIC_SITE_ENV: production
+        run: npm run submit-indexnow

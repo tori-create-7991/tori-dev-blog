@@ -1,0 +1,20 @@
+{
+  "name": "tori-dev-blog-content-import",
+  "private": true,
+  "type": "module",
+  "description": "任意の道具: Notion・Google Drive から記事と画像を取り込む。使い方は docs/content-import.md",
+  "scripts": {
+    "get-notion": "cd ../.. && tsx tools/content-import/getNotiontoMd.ts",
+    "get-drive": "cd ../.. && tsx tools/content-import/getGoogleDrive.ts",
+    "get-drive-file": "cd ../.. && tsx tools/content-import/getGoogleDriveByfile.ts"
+  },
+  "dependencies": {
+    "@notionhq/client": "^3.0.1",
+    "notion-to-md": "^3.1.9",
+    "googleapis": "^148.0.0",
+    "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  }
+}

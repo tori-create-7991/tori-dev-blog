@@ -1,5 +1,8 @@
 # Design Doc: Terraform / Firebase Hosting 移植（Option A）
 
+> **2026-10 注記**: Terraform は bootstrap / app の 2 段構成に移行し、`scripts/setup_gcp.sh`・content-sync・
+> Cloud Run 関連は削除した（[ADR 0006](../adr/0006-two-stage-terraform.md)）。以下は 2026-07 時点の設計の記録。
+
 ## Context and Scope
 
 tori-dev-blog（本リポジトリ）は 2026-06-25 に `012_nuxt-07_nuxt3_toriblog` の

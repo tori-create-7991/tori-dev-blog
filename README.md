@@ -1,104 +1,79 @@
 # tori-dev-blog
 
-[tori-dev.com](https://tori-dev.com) のソースコード。**中小企業の AI 導入・DX 顧問**としての活動拠点となるブログ＆ポートフォリオ。
+[tori-dev.com](https://tori-dev.com) のソースコード。技術ブログ、つぶやき、つくったものを置いている個人サイト。
 
-> 受託デリバリではなく、**顧問・ストック型** で長期に伴走するスタイルを目指しています。
-> 現役で農家の AI 導入支援、過去に DX 支援。OSS と自社プロダクトの運営者でもあります。
+フォークして自分のサイトを作ることもできる。インフラは Terraform でコード化してあり、
+GCP と GitHub があれば同じ構成を再現できる（[docs/setup/fork.md](docs/setup/fork.md)）。
 
-## 構成
+## ページ
 
-| 領域 | 用途 |
+| パス | 内容 |
 |---|---|
-| `/` (Home) | Hero ＋ 最新記事 ＋ 顧問 CTA |
-| `/posts` | 自前ブログ記事（@nuxt/content v3 ベース） |
-| `/advisory` | 顧問契約の提供価値・料金・FAQ・問い合わせ |
-| `/sidecontent/about` | プロフィール |
-| `/sidecontent/contact` | お問い合わせ |
-| `/sidecontent/policy` | プライバシーポリシー |
+| `/` | トップ |
+| `/posts`・`/posts/<slug>` | ブログ記事 |
+| `/category`・`/tag` | カテゴリ・タグ別の記事一覧 |
+| `/feed` | X・Bluesky・Instagram の投稿（つぶやき） |
+| `/works` | つくったもの・関わったもの |
+| `/service` | 提供していること |
+| `/about`・`/contact`・`/policy` | プロフィール・問い合わせ・プライバシーポリシー |
+| `/sitemap.xml`・`/rss.xml`・`/robots.txt` | ビルド時に生成 |
 
 ## 技術スタック
 
-- **Framework**: Nuxt 3 + @nuxt/content v3 + @nuxt/ui (Reka UI + Tailwind)
-- **State**: Pinia
-- **Search**: fuse.js
-- **CMS 統合**: Notion API (`notion-to-md`), Google Drive (`googleapis`)
-- **Hosting**: Firebase Hosting（SSG）+ Cloud Functions（フォーム受口、Phase 2 以降）
-- **Infra as Code**: Terraform（`terraform/`）— Firebase Hosting サイト + WIF/IAM。詳細は [`docs/design/terraform-firebase-hosting-migration.md`](docs/design/terraform-firebase-hosting-migration.md) と [`docs/runbook/terraform-deploy.md`](docs/runbook/terraform-deploy.md)
-- **Cross-post**: [tori-create-7991/article-relay](https://github.com/tori-create-7991/article-relay) — Qiita / Zenn にブログ記事をクロスポストする CLI
+| 層 | 技術 |
+|---|---|
+| サイト | Nuxt 3（全ページを事前生成）、@nuxt/content v3、@nuxt/ui、Tailwind CSS 4、Pinia、fuse.js |
+| 配信 | Firebase Hosting（本番サイトと、PR ごとのプレビューチャネルを置く検証サイト） |
+| DNS | Cloudflare（DNS only） |
+| インフラ | Terraform 2 段構成（`terraform/bootstrap` は人がローカルで、`terraform/app` は CI が apply）。[ADR 0006](docs/adr/0006-two-stage-terraform.md) |
+| CI | GitHub Actions。PR でビルド・プレビュー・plan、main で apply と配信。Secrets は使わない（Workload Identity Federation） |
+| 依存の更新 | Dependabot（週 1 回）。Actions はコミット SHA で固定 |
 
-## ライセンス
-
-- **コード**（`.ts`, `.vue`, `.js`, CSS, 設定ファイル等）: **MIT**（[`LICENSE`](LICENSE) 参照）
-- **記事**（`content/` 配下）と **画像**（`public/` 配下）: **All Rights Reserved**（[`docs/content-license.md`](docs/content-license.md) 参照）
-
-引用は出典明示で歓迎。商用利用・再配布は事前にご相談ください。
-
-## セットアップ
+## 開発
 
 ```bash
 git clone https://github.com/tori-create-7991/tori-dev-blog.git
 cd tori-dev-blog
-cp .env.example .env  # 必要に応じて作成
-npm install
+npm ci
+npm run dev        # http://localhost:3000
+npm run generate   # .output/public/ に静的サイトを生成
 ```
 
-`scripts/getNotiontoMd.ts` / `scripts/getGoogleDrive.ts` を使う場合は以下の環境変数を `.env` に設定:
+ビルドと開発サーバに環境変数は要らない。
 
-```
-NOTION_TOKEN=
-GOOGLE_APPLICATION_CREDENTIALS=
-```
+| コマンド | 内容 |
+|---|---|
+| `npm run generate-og` | 記事タイトルから OG 画像を生成（Python + Pillow） |
+| `npm run check-drafts` | ビルド結果に下書きが混ざっていないか検査 |
+| `npm run submit-indexnow` | IndexNow に更新を通知（CI が本番配信後に実行） |
 
-### 開発サーバ
+Notion・Google Drive から記事を取り込む任意の道具は [docs/content-import.md](docs/content-import.md)。
 
-```bash
-npm run dev
-# → http://localhost:3000
-```
+## デプロイとインフラ
 
-### ビルド（SSG）
+- PR を出すと、ビルドして PR ごとのプレビュー URL と Terraform の plan が PR にコメントされる。
+- main にマージすると、CI が `terraform/app` を apply し、本番へ配信する。
+- 権限・DNS・GitHub 設定（`terraform/bootstrap`）はローカルで apply する。
 
-```bash
-npm run generate
-# → .output/public/ に静的サイト生成
-```
+運用手順は [docs/runbook/terraform-deploy.md](docs/runbook/terraform-deploy.md)。
 
-### コンテンツ取り込み
+## 記事のクロスポスト
 
-```bash
-npm run get-notion   # Notion DB → content/posts/*.md
-npm run get-drive    # Google Drive → public/images/
-```
-
-### 記事クロスポスト
-
-別リポ `article-relay` から:
+[article-relay](https://github.com/tori-create-7991/article-relay) で Qiita・Zenn に転載する。
+`content/posts/*.md` の frontmatter で `cross_post: { qiita: true, zenn: true }` を立てた記事が対象。
 
 ```bash
 cd ../article-relay
 npm run cross -- ../tori-dev-blog/content/posts/<slug>.md
 ```
 
-`content/posts/*.md` の frontmatter で `cross_post: { qiita: true, zenn: true }` を立てた記事だけが対象。
+## ライセンス
 
-## 開発フェーズ
+- **コード**（`.ts`、`.vue`、`.js`、CSS、設定ファイルなど）: MIT（[LICENSE](LICENSE)）
+- **記事**（`content/` 配下）と**画像**（`public/` 配下）: All Rights Reserved（[docs/content-license.md](docs/content-license.md)）
 
-| Phase | 内容 | Status |
-|---|---|---|
-| 1 | `/advisory` ページ + article-relay 連携 frontmatter | ✓ |
-| 1.5 | Terraform / Firebase Hosting 移植（コード・runbook 準備まで。実際の apply/デプロイはユーザー実行） | ✓ |
-| 2 | `/tweets`（つぶやき集約 / x-times-relay 連携）+ ニュースレター + Works タブ | 検討中 |
-| 3 | デザイン刷新 + Works / About 全面リニューアル + `/contact` API + content-sync/eyecatch 移植 | 検討中 |
+引用は出典を明示すれば歓迎。商用利用・再配布は事前に相談してください。
 
-## 関連プロジェクト
+## セキュリティ
 
-| リポ | 役割 |
-|---|---|
-| [article-relay](https://github.com/tori-create-7991/article-relay) | 本ブログ記事を Qiita / Zenn にクロスポスト |
-| [x-times-relay](https://github.com/tori-create-7991/x-times-relay) | X 投稿を Slack / Discord に転送（つぶやき導線） |
-| [bonsaidev](https://github.com/tori-create-7991/bonsaidev) | 自律エージェント FW |
-| [whv-compass](https://github.com/tori-create-7991/whv-compass) | AI 相談 SaaS（豪 WHV 向け） |
-
-## 連絡先
-
-[tori-dev.com/advisory](https://tori-dev.com/advisory) からお願いします。
+脆弱性は公開の Issue ではなく、非公開の脆弱性報告で知らせてください（[SECURITY.md](SECURITY.md)）。

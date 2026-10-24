@@ -1,5 +1,9 @@
 # ブランチ別デプロイへの切替 runbook
 
+> **2026-10 注記**: この runbook の `preview` ブランチと preview.tori-dev.com は廃止した。
+> 検証は PR ごとのプレビューチャネルで行う（[ADR 0006](../adr/0006-two-stage-terraform.md)、
+> 移行は [iac-two-stage-migration.md](iac-two-stage-migration.md)）。以下は 2026-09 の切替の記録として残す。
+
 `main` → 本番 `tori-dev.com` / `preview` → 検証 `preview.tori-dev.com` の構成へ移行する手順。
 
 DNS とカスタムドメインの付け替えを伴うため、**順序を守ること**。各段階で検証コマンドを実行し、失敗したらその場でロールバックする。

@@ -16,7 +16,7 @@ resource "cloudflare_dns_record" "apex_a" {
   content = var.firebase_hosting_ip
   ttl     = 1
   proxied = false
-  comment = "Firebase Hosting（${local.prod_site_id}）"
+  # comment は付けない（Terraform 導入前からある既存レコードの状態に合わせる）
 
   lifecycle {
     prevent_destroy = true # 消すと tori-dev.com の名前解決が止まる
@@ -33,7 +33,7 @@ resource "cloudflare_dns_record" "ownership_txt" {
   content = "hosting-site=${local.prod_site_id}"
   ttl     = 1
   proxied = false
-  comment = "Firebase Hosting サイト所有権（apex -> ${local.prod_site_id}）"
+  comment = "Firebase Hosting サイト所有権（apex -> 本番サイト）"
 
   lifecycle {
     prevent_destroy = true # 消すと独自ドメインの所有権確認が外れる

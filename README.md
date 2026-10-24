@@ -28,8 +28,8 @@
 
 ## ライセンス
 
-- **コード**（`.ts`, `.vue`, 設定ファイル等）: **MIT**（[`LICENSE`](LICENSE) 参照）
-- **記事**（`content/posts/*.md` ほか）と **画像** (`public/images/`, `assets/`): **All Rights Reserved**
+- **コード**（`.ts`, `.vue`, `.js`, CSS, 設定ファイル等）: **MIT**（[`LICENSE`](LICENSE) 参照）
+- **記事**（`content/` 配下）と **画像**（`public/` 配下）: **All Rights Reserved**（[`LICENSE-CONTENT.md`](LICENSE-CONTENT.md) 参照）
 
 引用は出典明示で歓迎。商用利用・再配布は事前にご相談ください。
 

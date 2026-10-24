@@ -11,10 +11,7 @@ resource "google_firebase_hosting_site" "blog" {
   project  = var.project_id
   site_id  = "${var.project_id}-${var.firebase_site_suffix}"
 
-  depends_on = [
-    google_firebase_project.default,
-    google_project_service.firebasehosting,
-  ]
+  depends_on = [google_firebase_project.default]
 }
 
 resource "google_firebase_hosting_site" "preview" {
@@ -24,10 +21,7 @@ resource "google_firebase_hosting_site" "preview" {
   project  = var.project_id
   site_id  = "${var.project_id}-${var.preview_site_suffix}"
 
-  depends_on = [
-    google_firebase_project.default,
-    google_project_service.firebasehosting,
-  ]
+  depends_on = [google_firebase_project.default]
 }
 
 # 本番カスタムドメイン（apex を想定。設定時のみ）

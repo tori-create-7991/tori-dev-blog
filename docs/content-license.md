@@ -3,7 +3,7 @@
 Copyright (c) 2026 Tori (tori-create-7991). All Rights Reserved.
 
 このリポジトリのソースコード（`.ts` / `.vue` / `.js` / CSS / 設定ファイルなど）は
-[MIT License](LICENSE) です。ただし、次のコンテンツは MIT License の対象外で、
+[MIT License](../LICENSE) です。ただし、次のコンテンツは MIT License の対象外で、
 著作権者がすべての権利を保有します。
 
 - `content/` 配下の記事・お知らせ・その他の文章（`content/posts/*.md` など）
@@ -16,7 +16,7 @@ Copyright (c) 2026 Tori (tori-create-7991). All Rights Reserved.
 
 ---
 
-The source code of this repository is licensed under the [MIT License](LICENSE).
+The source code of this repository is licensed under the [MIT License](../LICENSE).
 The content listed above (articles and other text under `content/`, and images
 under `public/`) is **not** covered by the MIT License and is All Rights Reserved.
 Quotation with attribution is welcome; commercial use, republishing,

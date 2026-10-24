@@ -196,8 +196,8 @@ const scrollToHeading = (id) => {
     }
 }
 
-// コンテンツの取得
-const { data: post } = await useAsyncData('post', () => {
+// コンテンツの取得。キーを記事ごとに分けないと、クライアント遷移で最初に開いた記事のデータが使い回される
+const { data: post } = await useAsyncData(`post:${route.path}`, () => {
     return queryCollection('posts').path(route.path).first()
 })
 
@@ -210,7 +210,7 @@ if (!post.value) {
 }
 
 // 関連記事の取得
-const { data: categoryPost } = await useAsyncData('categoryPost', () => {
+const { data: categoryPost } = await useAsyncData(`categoryPost:${route.path}`, () => {
     if (post.value?.categories) {
         return queryCollection('posts')
             .select('path', 'title', 'description', 'date', 'image', 'tags')

@@ -96,7 +96,7 @@ const defaultImage = ref(siteConfig.defaultImage)
 const { formatDate } = useFormatDate()
 
 // コンテンツの取得
-const { data: post } = await useAsyncData('post', () => {
+const { data: post } = await useAsyncData(`announcement:${route.path}`, () => {
     return queryCollection('announcements').path(route.path).first()
 })
 

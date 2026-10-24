@@ -5,7 +5,7 @@
 #
 # 検証サイトには独自ドメインを付けない。PR ごとに
 # https://<preview site id>--pr-<番号>-<hash>.web.app の URL が発行される。
-# GCP プロジェクトの default site（tori-develop）は旧 Nuxt2 サイト。削除できないので管理しない。
+# GCP プロジェクトの default site（サイト ID = project_id）は旧 Nuxt2 サイト。削除できないので管理しない。
 
 resource "google_firebase_hosting_site" "blog" {
   provider = google-beta

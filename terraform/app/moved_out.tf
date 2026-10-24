@@ -87,7 +87,7 @@ removed {
 }
 
 # 次の 2 つは removed を書かない。定義を消したので apply で destroy され、
-# 旧 CI 用 SA が持っていた強い権限（projectIamAdmin など 8 ロール）と
+# 旧 CI 用 SA が持っていた強い権限（プロジェクトの IAM・WIF・SA を管理できるロールなど 8 件）と
 # tfstate バケットへの storage.admin が剥奪される。
 #   google_project_iam_member.github_actions
 #   google_storage_bucket_iam_member.github_actions_tfstate

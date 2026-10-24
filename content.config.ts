@@ -4,7 +4,13 @@ export default defineContentConfig({
   collections: {
     content: defineCollection({
       type: 'page',
-      source: '**/*.md'
+      // drafts/ を除外しないと、未使用のコレクションでも SQL ダンプ
+      // (/__nuxt_content/content/sql_dump.html) 経由で下書きが本番に公開される。
+      // ADR 0004 改訂節 / npm run check-drafts 参照
+      source: {
+        include: '**/*.md',
+        exclude: ['**/drafts/**'],
+      },
     }),
     posts: defineCollection({
       source: 'posts/*.md',

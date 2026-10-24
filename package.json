@@ -13,7 +13,8 @@
     "migrate-legacy-posts": "node scripts/migrate-legacy-posts.mjs",
     "generate-og": "python3 scripts/build-og-images.py",
     "build-og-font": "bash scripts/build-og-font.sh",
-    "submit-indexnow": "node scripts/submit-indexnow.mjs"
+    "submit-indexnow": "node scripts/submit-indexnow.mjs",
+    "check-drafts": "node scripts/check-no-drafts-in-build.mjs"
   },
   "dependencies": {
     "@notionhq/client": "^3.0.1",

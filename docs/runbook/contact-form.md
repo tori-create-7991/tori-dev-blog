@@ -7,7 +7,7 @@ GCP プロジェクトや Terraform には紐づかない。コードで持っ�
 
 | 項目 | 値 |
 |---|---|
-| オーナー | `ryo.tonegawa.7991@gmail.com`（マイドライブ直下） |
+| オーナー | 個人の Google アカウント（`gws` の既定プロファイル。マイドライブ直下） |
 | Drive ファイル ID（編集用） | `1LNUsv6ZZEH1nL6M5dasii0wBzsJ4fFqMfEVrbxHmjhQ` |
 | 編集 URL | https://docs.google.com/forms/d/1LNUsv6ZZEH1nL6M5dasii0wBzsJ4fFqMfEVrbxHmjhQ/edit |
 | 公開 ID（iframe 用） | `1FAIpQLSesrT3kzyqZm9txcsnnoUe68tHpzJrwLOiXnnJLidkKWbyl9g` |

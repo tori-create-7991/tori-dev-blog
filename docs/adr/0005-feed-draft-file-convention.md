@@ -26,12 +26,13 @@ Status: Accepted
 マッチしないため自動的にコレクションから除外される）。
 
 **公開**: 実際に投稿した後、`sourceUrl` を frontmatter に追記して
-`content/feed/` へ `git mv` する。
+`content/feed/` へ `mv` してから `git add` する
+（下書きは git 管理外。[0004](0004-content-draft-directory-convention.md) の改訂節参照）。
 
 ## Consequences
 
 **良い面:**
-- `blog-post-writer` と同じ「drafts/ に置く → 見直す → git mv で公開」の
+- `blog-post-writer` と同じ「drafts/ に置く → 見直す → mv + git add で公開」の
   流れを feed にもそのまま適用でき、運用が一貫する
 - 画像もテキストも「1ファイル (+ 画像1枚)」の単純な構成に収まる
 

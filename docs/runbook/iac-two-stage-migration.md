@@ -27,10 +27,11 @@ mkdir -p .migration-backup
 
 ```bash
 # tfstate バケットが公開されていない（手順 2 で公開アクセス防止を有効にする前の確認）
-# 取得に失敗したら OK と出さずに止める
-policy=$(gcloud storage buckets get-iam-policy gs://tori-develop-tfstate --account=ryo.tonegawa.7991@gmail.com --format=json) \
-  || { echo "IAM ポリシーを取得できません。止める"; false; }
-grep -E 'allUsers|allAuthenticatedUsers' <<<"$policy" && echo "公開設定あり。止める" || echo "OK: 公開設定なし"
+# 取得に失敗したら OK と出さない（端末に貼って実行しても止まるよう、取得の成否で分ける）
+policy=$(gcloud storage buckets get-iam-policy gs://tori-develop-tfstate --account=ryo.tonegawa.7991@gmail.com --format=json) || policy=""
+if [ -z "$policy" ]; then echo "IAM ポリシーを取得できません。止める"
+elif grep -qE 'allUsers|allAuthenticatedUsers' <<<"$policy"; then echo "公開設定あり。止める"
+else echo "OK: 公開設定なし"; fi
 
 # 旧サイト（default site）に付いている独自ドメイン（手順 4・7 で旧 TXT と旧サイトを止めるため）
 curl -sf -H "Authorization: Bearer $GOOGLE_OAUTH_ACCESS_TOKEN" \
@@ -115,6 +116,10 @@ gh variable list -R tori-create-7991/tori-dev-blog --json name --jq '.[].name' |
 #   TF_STATE_BUCKET TF_STATE_PREFIX_APP WIF_PROVIDER の 11 個（INDEXNOW_KEY は tfvars に値があるときだけ）があること。
 #   旧 Variables 4 個（CUSTOM_DOMAIN など）も手順 7 まで残る
 gh api repos/tori-create-7991/tori-dev-blog/rulesets --jq '.[].name'   # main
+# deployer SA に入れる条件が「main 上の Environment production」になっている
+gcloud iam service-accounts get-iam-policy gha-tori-dev-blog-deployer@tori-develop.iam.gserviceaccount.com \
+  --account=ryo.tonegawa.7991@gmail.com --format=json | jq -r '.bindings[].members[]'
+#   .../attribute.deploy_ctx/production@refs/heads/main が 1 行だけ出ること
 ```
 
 **戻し方**: 新しい Pool・SA・Variables は旧構成と並存しているので、旧 CI には影響しない。

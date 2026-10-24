@@ -14,16 +14,6 @@ variable "github_repo" {
   type        = string
 }
 
-variable "deploy_target" {
-  description = "デプロイ先（firebase / cloudrun / both）"
-  type        = string
-  default     = "firebase"
-
-  validation {
-    condition     = contains(["firebase", "cloudrun", "both"], var.deploy_target)
-    error_message = "deploy_targetはfirebase, cloudrun, bothのいずれかを指定してください。"
-  }
-}
 
 variable "firebase_site_suffix" {
   description = "Firebase Hostingサイト接尾辞（site_id = project_id-suffix）"
@@ -31,11 +21,6 @@ variable "firebase_site_suffix" {
   default     = "blog"
 }
 
-variable "cloudrun_service_name" {
-  description = "Cloud Runサービス名"
-  type        = string
-  default     = "tori-dev-blog"
-}
 
 variable "custom_domain" {
   description = "本番カスタムドメイン（apex 想定。空=設定なし）"

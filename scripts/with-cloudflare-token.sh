@@ -114,8 +114,8 @@ trap cleanup EXIT
 trap 'exit 130' INT TERM
 
 created="$(cf "$ISSUER" POST /user/tokens "$body")" || die "トークンを発行できません"
-TEMP_ID="$(jq -r '.result.id' <<<"$created")"
-TEMP_TOKEN="$(jq -r '.result.value' <<<"$created")"
+TEMP_ID="$(jq -er '.result.id' <<<"$created")" || die "発行したトークンの ID を読めません"
+TEMP_TOKEN="$(jq -er '.result.value' <<<"$created")" || die "発行したトークンの値を読めません"
 unset created
 
 

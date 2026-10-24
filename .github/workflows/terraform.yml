@@ -72,7 +72,10 @@ jobs:
           echo "run=false" >> "$GITHUB_OUTPUT"
           echo "### terraform plan は実行していません" >> "$GITHUB_STEP_SUMMARY"
           echo "フォークまたは Dependabot の PR では GCP に認証できないため。" >> "$GITHUB_STEP_SUMMARY"
-          if gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename' | grep -q '^terraform/'; then
+          # 取得に失敗したら「触っていない」扱いにせず止める
+          files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --paginate --jq '.[].filename') \
+            || { echo "::error::PR の変更ファイル一覧を取得できません"; exit 1; }
+          if grep -q '^terraform/' <<<"$files"; then
             echo "この PR は terraform/ を変更しています。ローカルで plan を確認してから、管理者として保護を無視してマージしてください（docs/runbook/terraform-deploy.md）。" >> "$GITHUB_STEP_SUMMARY"
             echo "::error::terraform/ を変更する PR ですが plan を実行できません。ローカルで plan を確認してください"
             exit 1
@@ -95,7 +98,7 @@ jobs:
           TF_VAR_expected_prod_site_id: ${{ vars.PROD_SITE_ID }}
           TF_VAR_expected_preview_site_id: ${{ vars.PREVIEW_SITE_ID }}
         run: |
-          terraform fmt -check -recursive
+          test -n "$TF_VAR_expected_prod_site_id" || { echo "::error::Variables の PROD_SITE_ID がありません（bootstrap を apply してください）"; exit 1; }
           terraform init -input=false -backend-config="bucket=$TF_STATE_BUCKET" -backend-config="prefix=$TF_STATE_PREFIX"
           # planner はロックファイルを書けない（state は読み取り専用）ので -lock=false
           set +e
@@ -165,6 +168,7 @@ jobs:
           TF_VAR_expected_prod_site_id: ${{ vars.PROD_SITE_ID }}
           TF_VAR_expected_preview_site_id: ${{ vars.PREVIEW_SITE_ID }}
         run: |
+          test -n "$TF_VAR_expected_prod_site_id" || { echo "::error::Variables の PROD_SITE_ID がありません（bootstrap を apply してください）"; exit 1; }
           terraform init -input=false -backend-config="bucket=$TF_STATE_BUCKET" -backend-config="prefix=$TF_STATE_PREFIX"
           terraform apply -input=false -auto-approve
 

@@ -16,7 +16,7 @@ CI は GitHub Secrets を使わない。値はすべて bootstrap が登録す�
 
 | CI 用 SA | 使える条件 | 権限 |
 |---|---|---|
-| `gha-tori-dev-blog-deployer` | Environment `production` のジョブ（main ブランチだけが使える） | Hosting の管理、app stack の state の読み書き |
+| `gha-tori-dev-blog-deployer` | main ブランチ上で Environment `production` を指定したジョブ | Hosting の管理、app stack の state の読み書き |
 | `gha-tori-dev-blog-preview` | PR | Hosting の管理（プレビューチャネルへの配信に使う） |
 | `gha-tori-dev-blog-planner` | このリポジトリの全ワークフロー | 読み取り、app stack の state の読み取り |
 
@@ -66,6 +66,7 @@ User API Tokens: Edit 権限）を使って、tori-dev.com だけを編集でき
 | PR の `build` | ビルドのログを見る。`check-drafts` の失敗は下書きがビルドに混ざっている（ADR 0004） |
 | 毎週の `drift` | 本番の Hosting 設定がコードとずれている。Console での手作業を探し、コードに取り込むか main から apply して戻す |
 | main の `deploy` の疎通確認 | Firebase Console のリリース履歴から前のバージョンに戻す（DNS は触らない） |
+| main の `terraform` の apply（`deploy` が動かない） | 配信は apply の成功後にしか動かない。原因を直すのが先だが、記事の公開だけ急ぐなら `gh workflow run deploy -R tori-create-7991/tori-dev-blog --ref main` で配信だけ実行できる |
 
 ## 定期的にやること
 

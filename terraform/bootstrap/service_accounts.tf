@@ -1,7 +1,7 @@
 # CI 用の SA。役割ごとに分け、それぞれ必要な権限だけを持つ。
 # 命名ルール: gha-<slug>-<役割>。
 #
-#   deployer  Environment production のジョブのみ（production は main ブランチだけが使える）。app の apply と本番配信
+#   deployer  main ブランチ上の Environment production のジョブのみ。app の apply と本番配信
 #   preview   PR のみ。検証サイトのプレビューチャネルへの配信
 #   planner   Pool 内の全員（= このリポジトリの全ワークフロー）。読み取りだけ（plan・ズレ検知）
 #
@@ -34,12 +34,13 @@ resource "google_service_account" "planner" {
 }
 
 # どのワークフローがどの SA になりすませるか。
-# deployer は Environment production を指定したジョブだけ。production は main ブランチからしか使えない
-# （github.tf の deployment policy）ので、main 上でも Environment を指定しない workflow からは使えない。
+# deployer は「Environment production を指定した、main ブランチ上のジョブ」だけ。
+# Environment とブランチの両方を見るので、GitHub 側の Environment のブランチ制限が外れても main 以外からは使えず、
+# main 上でも Environment を指定しない workflow からは使えない。
 resource "google_service_account_iam_member" "deployer_wif" {
   service_account_id = google_service_account.deployer.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "${local.pool_principal}/attribute.environment/production"
+  member             = "${local.pool_principal}/attribute.deploy_ctx/production@refs/heads/main"
 }
 
 resource "google_service_account_iam_member" "preview_wif" {

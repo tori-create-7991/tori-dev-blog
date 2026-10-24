@@ -15,7 +15,7 @@ custom_domain       = "tori-dev.com"
 indexnow_key        = "ea9a6ed0baf202d98cdb250aaa6d881d" # public/<key>.txt と同じ
 
 enable_cloudflare  = true
-cloudflare_zone_id = "TODO_ZONE_ID" # TODO: 移行前に Cloudflare から取得して埋める
+cloudflare_zone_id = "TODO_ZONE_ID" # TODO: 移行手順 1 で埋め、このコメントを消す
 
 # 2026-10 の移行で既存リソースを取り込む。移行後も残しておいてよい（取り込み済みなら何もしない）。
 existing = {

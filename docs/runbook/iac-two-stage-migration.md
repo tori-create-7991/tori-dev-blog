@@ -27,15 +27,25 @@ mkdir -p .migration-backup
 
 ```bash
 # tfstate バケットが公開されていない（手順 2 で公開アクセス防止を有効にする前の確認）
-gcloud storage buckets get-iam-policy gs://tori-develop-tfstate --account=ryo.tonegawa.7991@gmail.com \
-  | grep -E 'allUsers|allAuthenticatedUsers' && echo "公開設定あり。止める" || echo "OK"
+# 取得に失敗したら OK と出さずに止める
+policy=$(gcloud storage buckets get-iam-policy gs://tori-develop-tfstate --account=ryo.tonegawa.7991@gmail.com --format=json) \
+  || { echo "IAM ポリシーを取得できません。止める"; false; }
+grep -E 'allUsers|allAuthenticatedUsers' <<<"$policy" && echo "公開設定あり。止める" || echo "OK: 公開設定なし"
 
-# 旧サイト（default site）に tori-dev.com 以外のドメインが付いていない（手順 4・7 で旧 TXT と旧サイトを止めるため）
-curl -s -H "Authorization: Bearer $GOOGLE_OAUTH_ACCESS_TOKEN" \
-  "https://firebasehosting.googleapis.com/v1beta1/projects/tori-develop/sites/tori-develop/customDomains" | jq '.customDomains[]?.name'
+# 旧サイト（default site）に付いている独自ドメイン（手順 4・7 で旧 TXT と旧サイトを止めるため）
+curl -sf -H "Authorization: Bearer $GOOGLE_OAUTH_ACCESS_TOKEN" \
+  "https://firebasehosting.googleapis.com/v1beta1/projects/tori-develop/sites/tori-develop/customDomains" \
+  | jq -e '[.customDomains[]?.name]' || echo "取得に失敗。止める"
+
+# tfstate バケット全体の控え（このバケットには他リポジトリの state もあり、手順 2 で世代管理を有効にする前に取る）
+gcloud storage cp -r gs://tori-develop-tfstate .migration-backup/tfstate-bucket --account=ryo.tonegawa.7991@gmail.com
 ```
 
-旧サイトに独自ドメインが残っていたら、手順 4 の旧 TXT の削除と手順 7 の旧サイト停止はしないで報告する。
+旧サイトのドメイン一覧は `[]`（空）であることを期待する。何か出たら、手順 4 の旧 TXT の削除と手順 7 の旧サイト停止はしないで報告する。
+
+tfstate バケット `tori-develop-tfstate` は名刺サイトなど他リポジトリの state と共用している。手順 2 で入れる世代管理と古い世代の削除ルールは、
+バケット全体（他リポジトリの state も）に効く。他リポジトリの Terraform がこのバケット自体（`google_storage_bucket`）を管理していないことを確認しておく
+（2026-10 時点では、どのリポジトリもバケットを管理していない。作ったのは旧 `setup_gcp.sh`）。
 
 ## 1. Cloudflare の ID を調べて tfvars に書く
 
@@ -60,7 +70,8 @@ jq -r '.result[] | [.id, .type, .name, .content, (.proxied|tostring)] | @tsv' .m
 | `CNAME preview.tori-dev.com` | 手順 4 で削除 |
 | `TXT tori-dev.com hosting-site=tori-develop`（旧サイト用） | 手順 4 で削除 |
 
-tfvars の `TODO_` をすべて埋めたら、コミットして PR に push する（ID は秘密ではない）。CI の `plan` チェックは `TODO_` が残っていると失敗する。
+tfvars の `TODO_` をすべて埋め、行末の `# TODO:` コメントも消してから、コミットして PR に push する（ID は秘密ではない）。
+CI の `plan` チェックは `TODO_` が残っていると失敗する。埋めた後も、手順 2 で Variables と SA ができるまでは認証できずに失敗する（手順 5 で再実行するまで赤のままでよい）。
 
 **確認**: `grep -n TODO_ terraform/*/terraform.tfvars` が何も出さない。
 
@@ -82,12 +93,14 @@ P=.migration-backup/bootstrap-plan.json
 jq '[.resource_changes[] | select(.change.actions | index("delete"))] | length' $P
 # import が 11 件（tfstate バケット 1、API 8、DNS 2）
 jq '[.resource_changes[] | select(.change.importing != null)] | length' $P
-# 既存リソースへの変更（import 以外の update）は tfstate バケットの 1 件だけ
+# 既存リソースへの変更（update）は tfstate バケットの 1 件だけ
 jq -r '.resource_changes[] | select(.change.actions == ["update"]) | .address' $P
+# 変更の全体（create は新しく作るもの。delete・replace が 1 件も無いこと）
+jq -r '.resource_changes[] | select(.change.actions != ["no-op"]) | "\(.change.actions|join(",")) \(.address)"' $P | sort | uniq -c | sort -rn | head -50
 ```
 
 - tfstate バケットの update は「公開アクセス防止」「バージョニング有効」「古い世代の削除ルール」の追加だけであること。作り直し（replace）になっていたら止める（`tf_state_bucket_location` が実際と違う）。
-- DNS の 2 件は import だけで、update が出ないこと。出たら止めて差分を読む（TXT の引用符や comment の差なら tfvars か定義を直す）。apex の A は消えると名前解決が止まるので、少しでも怪しければ進まない。
+- DNS の 2 件は import だけで、update が出ないこと。出たら止めて差分を読み、`terraform/bootstrap/dns.tf` の `content`・`comment`・`ttl` を実際の値に合わせてから plan し直す（TXT の引用符の付け方の差がよくある）。apex の A は消えると名前解決が止まるので、少しでも怪しければ進まない。
 - 新規作成されるもの: Pool・Provider・SA 3 つ・IAM・GitHub の Variables 11 件・Environment 2 つ・ruleset・非公開の脆弱性報告（ローカルの `gh` で設定する）。
 
 ```bash
@@ -97,7 +110,10 @@ scripts/with-cloudflare-token.sh -- mise exec -- terraform -chdir=terraform/boot
 **確認**:
 
 ```bash
-gh variable list -R tori-create-7991/tori-dev-blog                     # WIF_PROVIDER など 11 件
+gh variable list -R tori-create-7991/tori-dev-blog --json name --jq '.[].name' | sort
+#   DEPLOYER_SA GCP_PROJECT_ID INDEXNOW_KEY PLANNER_SA PREVIEW_SA PREVIEW_SITE_ID PROD_SITE_ID PROD_SITE_URL
+#   TF_STATE_BUCKET TF_STATE_PREFIX_APP WIF_PROVIDER の 11 個（INDEXNOW_KEY は tfvars に値があるときだけ）があること。
+#   旧 Variables 4 個（CUSTOM_DOMAIN など）も手順 7 まで残る
 gh api repos/tori-create-7991/tori-dev-blog/rulesets --jq '.[].name'   # main
 ```
 
@@ -138,6 +154,8 @@ cd ../..
 P=.migration-backup/app-plan.json
 jq -r '.resource_changes[] | select(.change.actions | index("delete")) | .address' $P
 jq '[.resource_changes[] | select(.change.actions == ["update"])] | length' $P   # 0
+# 変更の全体。delete 11 と forget 11 のほかに create・update・replace が無いこと
+jq -r '.resource_changes[] | select(.change.actions != ["no-op"]) | "\(.change.actions|join(",")) \(.address)"' $P | sort
 ```
 
 | 削除されるもの | 件数 | 理由 |

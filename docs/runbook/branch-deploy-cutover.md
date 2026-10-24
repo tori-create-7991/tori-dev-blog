@@ -66,8 +66,11 @@ Firebase は apex をどのサイトが持つかを `hosting-site=<site_id>` の
 
 ```bash
 # tori-dev-secrets(GCPプロジェクト) のトークンで、旧 TXT だけを内容一致で削除する
+# SECRET_ACCOUNT は tori-dev-secrets を読める組織アカウント（docs/runbook/terraform-deploy.md の
+# 環境変数の節を参照。`gcloud auth list` に出ているものから選ぶ）。未設定なら止める
+: "${SECRET_ACCOUNT:?SECRET_ACCOUNT を export してから実行する}"
 CF_TOKEN=$(gcloud secrets versions access latest --secret=cloudflare-tori-dev-dns-token \
-  --project=tori-dev-secrets --account="$SECRET_ACCOUNT")  # tori-dev-secrets を読める組織アカウント
+  --project=tori-dev-secrets --account="$SECRET_ACCOUNT")
 CF_ZONE=$(curl -sS -H "Authorization: Bearer $CF_TOKEN" \
   "https://api.cloudflare.com/client/v4/zones?name=tori-dev.com" \
   | python3 -c "import sys,json;print(json.load(sys.stdin)['result'][0]['id'])")
@@ -136,7 +139,7 @@ curl -X DELETE -H "Authorization: Bearer $TOKEN" -H "x-goog-user-project: tori-d
 > 1. **認証は ADC ではなくユーザー認証を使う。**
 >    `gcloud auth application-default print-access-token` は別アカウント
 >    （`good-digital`）を掴んでいて 403 になる。`gcloud auth print-access-token`
->    （プロジェクトのオーナー権限を持つ個人アカウント）を使う。
+>    （プロジェクトのオーナー権限を持つ個人アカウント。`gcloud auth list` で確認する）を使う。
 >    `gcloud config configurations list` でアクティブ設定がずれていないかも見る。
 > 2. **curl には `-f` を付けない。** 付けると HTTP エラーの本文が消えて原因が追えない。
 >    逆にスクリプト内では `-f` が無いと 401 でも終了コード 0 で素通りするため、

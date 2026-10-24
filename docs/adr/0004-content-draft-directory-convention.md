@@ -71,3 +71,18 @@ SQL ダンプ（`/__nuxt_content/<collection>/sql_dump.html`）として静的�
 - コレクションを追加・変更するときは `npm run generate && npm run check-drafts` で漏れが無いか確認する
 
 既存の公開 PR に含まれている下書き（履歴に残ったもの）はこの改訂の対象外。
+
+運用上の注意:
+
+- 下書きは書き出したマシンの primary checkout（`~/Repo/my/tori-dev-blog`）にしか存在しない。
+  git のバックアップが効かないので、`git clean -x` / `-X` を primary で実行しない
+- worktree には ignore されたファイルが引き継がれない。worktree で公開作業をするときは、
+  primary の `drafts/` から worktree の `content/posts/` へ `mv` してから `git add` する
+
+残っているリスク（この改訂では対応しない）:
+
+- Instagram 下書きの画像（[0005](0005-feed-draft-file-convention.md) の `public/feed/<slug>.png`）は
+  `public/` 配下のため gitignore の対象外で、commit すれば公開リポジトリと本番の両方に出る。
+  置き場を drafts 側に移すには書き出し側スキル（00_my_env の image-sns-writer）の変更が要るので別タスクにする。
+  それまでは下書き段階の画像を commit しない
+- `npm run check-drafts` はまだ CI（デプロイ前）に組み込んでいない。`.github/workflows` の変更として別 PR で入れる

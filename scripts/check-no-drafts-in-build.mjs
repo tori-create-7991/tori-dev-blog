@@ -29,12 +29,21 @@ for (const collection of readdirSync(root)) {
   try {
     sql = gunzipSync(Buffer.from(raw, 'base64')).toString('utf-8')
   } catch {
-    // 圧縮されていない形式で出力された場合はそのまま検査する
+    // 圧縮されていない形式で出力された場合はそのまま検査する。
+    // SQL に見えなければ形式が変わったとみなして失敗させる（base64 のまま検査すると素通りするため）
+    if (!/\b(INSERT|CREATE)\b/i.test(raw)) {
+      console.error(`[check-drafts] ${file} を展開できません（ダンプ形式が変わった可能性）`)
+      process.exit(1)
+    }
     sql = raw
   }
   checked++
 
-  const paths = new Set(sql.match(/'\/[^']*\/drafts\/[^']*'/g) ?? [])
+  // path('/posts/drafts/x', drafts/index.md なら '/posts/drafts')・id('content/posts/drafts/x.md')・
+  // stem('posts/drafts/x')、トップレベルの drafts/ も拾う。id 列は frontmatter の path: で
+  // 上書きできないので、path を書き換えた下書きも id で検出できる。
+  // 空白を含まない引用文字列に限るので、本文中で drafts/ に言及しているだけの記事は誤検知しない
+  const paths = new Set(sql.match(/'(?:[^'\s]*\/)?drafts(?:\/[^'\s]*)?'/g) ?? [])
   for (const p of paths) leaks.push(`${collection}: ${p}`)
 }
 

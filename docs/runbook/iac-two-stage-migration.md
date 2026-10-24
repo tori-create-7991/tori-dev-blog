@@ -52,17 +52,19 @@ tfstate バケット `tori-develop-tfstate` は名刺サイトなど他リポジ
 
 ## 1. Cloudflare の ID を調べて tfvars に書く
 
-ゾーン ID は Cloudflare ダッシュボードの tori-dev.com の Overview（右側の API 欄）にある。秘密ではない。
-`terraform/bootstrap/terraform.tfvars` の `cloudflare_zone_id` に書いてから、レコードの一覧を出して控える。
+tori-dev-secrets にある既存の DNS 用トークン（`cloudflare-tori-dev-dns-token`）で、ゾーン ID とレコードの一覧を読み取る（読み取りだけ）。
 
 ```bash
-scripts/with-cloudflare-token.sh -- sh -c '
-  ZONE=$(sed -nE "s/^ *cloudflare_zone_id *= *\"([0-9a-f]{32})\".*/\1/p" terraform/bootstrap/terraform.tfvars)
-  printf "header = \"Authorization: Bearer %s\"\n" "$CLOUDFLARE_API_TOKEN" \
-    | curl -s --config - "https://api.cloudflare.com/client/v4/zones/$ZONE/dns_records?per_page=100"' \
-  > .migration-backup/dns-records.json
+T=$(gcloud secrets versions access latest --secret=cloudflare-tori-dev-dns-token --project=tori-dev-secrets \
+  --account=ryo.tonegawa.7991@gmail.com)
+cf() { printf 'header = "Authorization: Bearer %s"\n' "$T" | curl -s --config - "https://api.cloudflare.com/client/v4$1"; }
+ZONE=$(cf "/zones?name=tori-dev.com" | jq -r '.result[0].id'); echo "$ZONE"
+cf "/zones/$ZONE/dns_records?per_page=100" > .migration-backup/dns-records.json
 jq -r '.result[] | [.id, .type, .name, .content, (.proxied|tostring)] | @tsv' .migration-backup/dns-records.json
+unset T
 ```
+
+ゾーン ID を `terraform/bootstrap/terraform.tfvars` の `cloudflare_zone_id` に書く（秘密ではない）。
 
 一覧から次の ID を控える。
 
@@ -71,7 +73,7 @@ jq -r '.result[] | [.id, .type, .name, .content, (.proxied|tostring)] | @tsv' .m
 | `A tori-dev.com 199.36.158.100` | tfvars の `existing.dns_apex_a_record_id`（import） |
 | `TXT tori-dev.com hosting-site=tori-develop-blog` | tfvars の `existing.dns_ownership_txt_record_id`（import） |
 | `CNAME preview.tori-dev.com` | 手順 4 で削除 |
-| `TXT tori-dev.com hosting-site=tori-develop`（旧サイト用） | 手順 4 で削除 |
+| `TXT tori-dev.com hosting-site=tori-develop`（旧サイト用） | 手順 4 で削除（2026-10-24 の確認では既に無かった） |
 
 tfvars の `TODO_` をすべて埋め、行末の `# TODO:` コメントも消してから、コミットして PR に push する（ID は秘密ではない）。
 CI の `plan` チェックは `TODO_` が残っていると失敗する。埋めた後も、手順 2 で Variables と SA ができるまでは認証できずに失敗する（手順 5 で再実行するまで赤のままでよい）。

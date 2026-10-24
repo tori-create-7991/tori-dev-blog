@@ -15,7 +15,7 @@ custom_domain       = "tori-dev.com"
 indexnow_key        = "ea9a6ed0baf202d98cdb250aaa6d881d" # public/<key>.txt と同じ
 
 enable_cloudflare  = true
-cloudflare_zone_id = "TODO_ZONE_ID" # TODO: 移行手順 1 で埋め、このコメントを消す
+cloudflare_zone_id = "98c94cbaea7f571a226692e1a14eba27"
 
 # 2026-10 の移行で既存リソースを取り込む。移行後も残しておいてよい（取り込み済みなら何もしない）。
 existing = {
@@ -30,6 +30,6 @@ existing = {
     "storage.googleapis.com",
     "sts.googleapis.com",
   ]
-  dns_apex_a_record_id        = "TODO_RECORD_ID" # TODO: 移行前に取得して埋める
-  dns_ownership_txt_record_id = "TODO_RECORD_ID" # TODO: 移行前に取得して埋める
+  dns_apex_a_record_id        = "15048a15c7e4d915cdefb914566da18c"
+  dns_ownership_txt_record_id = "4c16c230ab3f423c05eb15f0a103019c"
 }

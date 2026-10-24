@@ -7,9 +7,9 @@ terraform {
   # 誤って破壊した実インシデントがある。
   # prefixにはリポジトリ名をフルで含めること（"terraform/blog"のような
   # 汎用名は禁止）。
-  backend "gcs" {
-    prefix = "terraform/tori-dev-blog"
-  }
+  # bucket と prefix は backend.hcl で渡す（terraform init -backend-config=backend.hcl）。
+  # prefix にはリポジトリ名をフルで含めること（命名ルール gcp-ci-identity-naming）。
+  backend "gcs" {}
 
   required_providers {
     google = {

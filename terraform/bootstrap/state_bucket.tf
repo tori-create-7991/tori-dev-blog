@@ -12,6 +12,28 @@ resource "google_storage_bucket" "tfstate" {
     enabled = true
   }
 
+  # 古い世代は溜めすぎない。新しい世代が 10 個を超えたもの、または古くなって 90 日経ったものを消す。
+  # このバケットには他リポジトリの state もあるので、それらにも同じルールがかかる。
+  lifecycle_rule {
+    condition {
+      num_newer_versions = 10
+      with_state         = "ARCHIVED"
+    }
+    action {
+      type = "Delete"
+    }
+  }
+
+  lifecycle_rule {
+    condition {
+      days_since_noncurrent_time = 90
+      with_state                 = "ARCHIVED"
+    }
+    action {
+      type = "Delete"
+    }
+  }
+
   lifecycle {
     prevent_destroy = true
   }

@@ -43,3 +43,6 @@ terraform/**/*.auto.tfvars
 terraform/**/secret*.tfvars
 terraform/**/crash.log
 terraform/**/tfplan
+
+# 移行作業の控え（state・IAM・DNS の JSON）。公開リポジトリなのでコミットしない
+.migration-backup/

@@ -64,7 +64,7 @@ removed {
 
 # 旧 CI 用 SA・旧 WIF Provider（共有 Pool github-pool 内）・SA の WIF binding。
 # 新しい専用 Pool と SA は bootstrap stack が作る。
-# これらは新構成で CI が通ってから、移行手順 6 で gcloud により削除する。
+# これらは新構成で CI が通ってから、移行手順 7 で gcloud により削除する。
 removed {
   from = google_service_account.github_actions
   lifecycle {

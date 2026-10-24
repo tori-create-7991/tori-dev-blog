@@ -17,6 +17,10 @@ resource "cloudflare_dns_record" "apex_a" {
   ttl     = 1
   proxied = false
   comment = "Firebase Hosting（${local.prod_site_id}）"
+
+  lifecycle {
+    prevent_destroy = true # 消すと tori-dev.com の名前解決が止まる
+  }
 }
 
 # Firebase Hosting のサイト所有権。apex をこのサイトに紐付けるために要る。
@@ -30,4 +34,8 @@ resource "cloudflare_dns_record" "ownership_txt" {
   ttl     = 1
   proxied = false
   comment = "Firebase Hosting サイト所有権（apex -> ${local.prod_site_id}）"
+
+  lifecycle {
+    prevent_destroy = true # 消すと独自ドメインの所有権確認が外れる
+  }
 }

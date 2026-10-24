@@ -93,7 +93,7 @@ PR を作ると `build`（ビルドとプレビュー配信）と `plan`（app �
 - **インフラの変更**: app（Hosting・ドメイン）は PR で変えれば、マージ時に CI が apply する。
   bootstrap（権限・DNS・GitHub 設定）はローカルで plan → PR → マージ後にローカルで apply。
 - **フォークと Dependabot の PR**: GCP に認証できないので plan とプレビューは動かず、ビルドの確認だけになる。
-  必須チェック `plan` は成功扱いになるので、Terraform に関わる更新はローカルで plan を確認してから、
-  管理者として保護を無視してマージする。
+  Terraform に触れない PR なら必須チェック `plan` は成功扱いになる。`terraform/` に触れる PR では `plan` が失敗するので、
+  ローカルで plan を確認してから、管理者として保護を無視してマージする。
 - **CI は秘密を持たない**: GitHub Secrets は使わない。値はすべて bootstrap が登録する Variables。
 - 詳しい運用手順は [terraform-deploy.md](../runbook/terraform-deploy.md)。

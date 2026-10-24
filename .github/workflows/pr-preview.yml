@@ -14,15 +14,17 @@ on:
 
 permissions: {}
 
+# 同じ PR の古いビルドは止める。PR を閉じたときの cleanup はビルドと別のグループにして止めない。
 concurrency:
-  group: pr-preview-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: pr-preview-${{ github.event.pull_request.number }}-${{ github.event.action == 'closed' && 'cleanup' || 'build' }}
+  cancel-in-progress: ${{ github.event.action != 'closed' }}
 
 jobs:
   build:
     name: build
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: pr-preview
     permissions:
       contents: read
@@ -84,8 +86,9 @@ jobs:
           npx firebase target:apply hosting preview "$PREVIEW_SITE_ID" --project "$GCP_PROJECT_ID"
           npx firebase hosting:channel:deploy "pr-${PR_NUMBER}" --only preview --expires 7d \
             --project "$GCP_PROJECT_ID" --json > "$RUNNER_TEMP/channel.json"
-          url=$(jq -r --arg site "$PREVIEW_SITE_ID" '.result[$site].url // empty' "$RUNNER_TEMP/channel.json")
-          expire=$(jq -r --arg site "$PREVIEW_SITE_ID" '.result[$site].expireTime // empty' "$RUNNER_TEMP/channel.json")
+          # result のキーは firebase.json のターゲット名（preview）。ターゲットは 1 つだけなので先頭を取る
+          url=$(jq -r '[.result[]][0].url // empty' "$RUNNER_TEMP/channel.json")
+          expire=$(jq -r '[.result[]][0].expireTime // empty' "$RUNNER_TEMP/channel.json")
           [ -n "$url" ] || { cat "$RUNNER_TEMP/channel.json"; echo "::error::プレビュー URL を取得できません"; exit 1; }
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "expire=$expire" >> "$GITHUB_OUTPUT"
@@ -105,7 +108,7 @@ jobs:
             const { owner, repo } = context.repo;
             const issue_number = context.issue.number;
             const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
-            const mine = comments.find(c => c.user.type === 'Bot' && c.body.includes(marker));
+            const mine = comments.find(c => c.user.login === 'github-actions[bot]' && c.body.includes(marker));
             if (mine) {
               await github.rest.issues.updateComment({ owner, repo, comment_id: mine.id, body: text });
             } else {
@@ -139,6 +142,7 @@ jobs:
       - name: Delete preview channel
         run: |
           version=$(jq -r '.devDependencies["firebase-tools"]' package.json)
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::firebase-tools のバージョンが固定値ではありません: $version"; exit 1; }
           npx --yes "firebase-tools@${version}" hosting:channel:delete "pr-${PR_NUMBER}" \
             --site "$PREVIEW_SITE_ID" --project "$GCP_PROJECT_ID" --force \
-            || echo "チャネル pr-${PR_NUMBER} は無いか、既に期限切れです"
+            || echo "::warning::チャネル pr-${PR_NUMBER} を削除できませんでした（既に期限切れなら問題なし。7 日で自動的に消える）"

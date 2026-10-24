@@ -24,7 +24,7 @@ Status: Accepted（2026-10-24）
    - PR では CI が app の plan を実行して PR にコメントする。マージすれば apply されるので、コードと本番が食い違わない。
 2. **WIF Pool はリポジトリごとに作る**（00_my_env の命名ルール `gcp-ci-identity-naming`）。Pool `tori-dev-blog-pool`、
    Provider `github-actions`、SA `gha-tori-dev-blog-<役割>`。Pool が専用なので、SA のなりすまし条件を
-   `ref`（deployer は main のみ）や `event_name`（preview は PR のみ）だけで安全に絞れる。
+   `environment`（deployer は main だけが使える Environment production のみ）や `event_name`（preview は PR のみ）だけで安全に絞れる。
 3. **CI は秘密を 1 つも持たない。** GitHub Secrets は 0 件。DNS はほとんど変わらないので bootstrap に置き、
    apply するときだけ `scripts/with-cloudflare-token.sh` が有効期限 1 時間のトークンを発行して終わったら消す。
 4. **PR ごとに Firebase Hosting のプレビューチャネルを出し、`preview` ブランチと preview.tori-dev.com を廃止する。**
@@ -44,7 +44,9 @@ Status: Accepted（2026-10-24）
 
 - フォークした人は、tfstate バケットを gcloud で 1 回作ったあと、bootstrap と app を 1 回ずつ apply すれば同じ構成になる（`docs/setup/fork.md`）。
 - CI が持つ権限は「app stack の apply（Hosting だけ）と配信」と「読み取り」だけになる。
-- フォークや Dependabot の PR では GCP に認証できないので plan が動かない。必須チェック `plan` は成功扱いにし、
-  Terraform に関わる更新はマージ前にローカルで plan を確認する。
+- フォークや Dependabot の PR では GCP に認証できないので plan が動かない。`terraform/` に触れる PR では必須チェック `plan` を
+  失敗させ、ローカルで plan を確認したうえで管理者がマージする。
+- 本番サイト・独自ドメイン・apex の DNS・tfstate バケットには `prevent_destroy` を付け、設定値の書き換えミスで消えないようにする。
+- CI の deployer SA は、Environment `production`（main ブランチだけが使える）のジョブからしか使えない。
 - DNS のズレは CI では検知しない。bootstrap をローカルで plan したときに確認する。
 - 移行手順は `docs/runbook/iac-two-stage-migration.md`。

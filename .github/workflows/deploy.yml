@@ -1,10 +1,13 @@
-# 本番サイトへの配信（main への push）。
+# 本番サイトへの配信。main への push で terraform.yml の apply が成功したあとに動く
+# （Hosting の変更が先に反映されてから配信するため）。手動実行もできる。
 # インフラの変更は terraform.yml が行う。ここは Hosting への配信だけ。
 # 値はすべて GitHub Variables（bootstrap stack が登録）から読む。Secrets は使わない。
 name: deploy
 
 on:
-  push:
+  workflow_run:
+    workflows: [terraform]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -17,8 +20,15 @@ concurrency:
 jobs:
   deploy:
     name: deploy
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' && (
+        github.event_name == 'workflow_dispatch' || (
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.conclusion == 'success'
+        )
+      )
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: production
     permissions:
       contents: read
@@ -28,7 +38,10 @@ jobs:
       PROD_SITE_ID: ${{ vars.PROD_SITE_ID }}
       PROD_SITE_URL: ${{ vars.PROD_SITE_URL }}
     steps:
+      # workflow_run のときは、apply したのと同じコミットを配信する
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -68,20 +81,21 @@ jobs:
       - name: Verify deployment
         run: |
           echo "checking ${PROD_SITE_URL}"
+          ok=false
           for i in 1 2 3; do
-            CODE=$(curl -sS -m 20 -o /tmp/page.html -w '%{http_code}' "${PROD_SITE_URL}/" || echo 000)
-            [ "$CODE" = "200" ] && break
-            echo "  attempt ${i}: HTTP ${CODE}, retrying..."
+            CODE=$(curl -sS -m 20 -o /dev/null -D /tmp/headers.txt -w '%{http_code}' "${PROD_SITE_URL}/" || echo 000)
+            if [ "$CODE" = "200" ] && grep -qi '^content-security-policy:' /tmp/headers.txt; then
+              ok=true
+              break
+            fi
+            echo "  attempt ${i}: HTTP ${CODE}（CSP ヘッダーも確認）, retrying..."
             sleep 10
           done
-          echo "HTTP ${CODE}"
-          [ "$CODE" = "200" ] || exit 1
-          if curl -sSI -m 20 "${PROD_SITE_URL}/" | grep -qi '^content-security-policy:'; then
-            echo "security headers: OK"
-          else
-            echo "::error::Content-Security-Policy ヘッダーが配信されていません"
+          if [ "$ok" != "true" ]; then
+            echo "::error::本番が HTTP 200 と Content-Security-Policy ヘッダーを返しません（最後の HTTP ${CODE}）"
             exit 1
           fi
+          echo "HTTP 200, security headers: OK"
 
       # IndexNow で更新を通知する（Bing / Yandex / Naver / Seznam / Yep）。
       # 通知は補助的な仕組みなので、失敗してもジョブは落とさない。

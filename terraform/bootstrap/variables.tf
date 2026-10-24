@@ -83,6 +83,11 @@ variable "cloudflare_zone_id" {
   description = "Cloudflare のゾーン ID（秘密ではない）。enable_cloudflare = true のとき必須"
   type        = string
   default     = ""
+
+  validation {
+    condition     = !var.enable_cloudflare || can(regex("^[0-9a-f]{32}$", var.cloudflare_zone_id))
+    error_message = "enable_cloudflare = true のときは cloudflare_zone_id に 32 桁の 16 進数のゾーン ID を入れてください。"
+  }
 }
 
 variable "firebase_hosting_ip" {
@@ -107,4 +112,12 @@ variable "existing" {
     dns_ownership_txt_record_id = optional(string, "")
   })
   default = {}
+
+  validation {
+    condition = (
+      (var.existing.dns_apex_a_record_id == "" && var.existing.dns_ownership_txt_record_id == "")
+      || (var.enable_cloudflare && var.custom_domain != "")
+    )
+    error_message = "DNS レコードを import するには enable_cloudflare = true と custom_domain が必要です。"
+  }
 }

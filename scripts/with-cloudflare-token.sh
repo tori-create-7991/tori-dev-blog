@@ -98,11 +98,7 @@ body="$(jq -nc \
   '{name: $name, expires_on: $exp,
     policies: [{effect: "allow", resources: {($zone): "*"},
                 permission_groups: [{id: $dns}, {id: $zr}]}]}')"
-created="$(cf "$ISSUER" POST /user/tokens "$body")" || die "トークンを発行できません"
-TEMP_ID="$(jq -r '.result.id' <<<"$created")"
-TEMP_TOKEN="$(jq -r '.result.value' <<<"$created")"
-unset created
-
+TEMP_ID=""
 cleanup() {
   local rc=$?
   if [[ -n "${TEMP_ID:-}" ]]; then
@@ -117,7 +113,13 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT TERM
 
-log "トークンを発行しました（期限 $expires_on）。コマンドを実行します: $*"
+created="$(cf "$ISSUER" POST /user/tokens "$body")" || die "トークンを発行できません"
+TEMP_ID="$(jq -r '.result.id' <<<"$created")"
+TEMP_TOKEN="$(jq -r '.result.value' <<<"$created")"
+unset created
+
+
+log "トークンを発行しました（期限 $expires_on）。コマンドを実行します: $1 ..."
 
 # 6. コマンドを実行する。トークンは子プロセスの環境変数にだけ渡す。
 CLOUDFLARE_API_TOKEN="$TEMP_TOKEN" "$@"

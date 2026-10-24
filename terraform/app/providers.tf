@@ -2,7 +2,7 @@
 # WIF・SA・tfstate バケット・DNS・GitHub 設定は bootstrap stack（人がローカルで apply）。
 
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.7.0" # removed ブロックを使う
 
   # bucket と prefix は backend.hcl で渡す（terraform init -backend-config=backend.hcl）。
   # prefix にはリポジトリ名をフルで含めること（命名ルール gcp-ci-identity-naming）。

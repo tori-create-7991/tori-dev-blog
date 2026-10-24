@@ -1,6 +1,6 @@
 # GitHub Actions から GCP へ鍵ファイルなしで入るための Workload Identity Federation。
 # 命名ルール（gcp-ci-identity-naming）: 1 リポジトリ 1 Pool、Pool は <slug>-pool、Provider は github-actions。
-# Pool がこのリポジトリ専用なので、SA のなりすまし条件を ref や event だけで安全に絞れる。
+# Pool がこのリポジトリ専用なので、SA のなりすまし条件を environment や event_name だけで安全に絞れる。
 
 resource "google_iam_workload_identity_pool" "github" {
   workload_identity_pool_id = "${var.repo_slug}-pool"
@@ -16,11 +16,12 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   display_name                       = "GitHub Actions"
 
   attribute_mapping = {
-    "google.subject"       = "assertion.sub"
-    "attribute.repository" = "assertion.repository"
-    "attribute.ref"        = "assertion.ref"
-    "attribute.event_name" = "assertion.event_name"
-    "attribute.actor"      = "assertion.actor"
+    "google.subject"        = "assertion.sub"
+    "attribute.repository"  = "assertion.repository"
+    "attribute.ref"         = "assertion.ref"
+    "attribute.event_name"  = "assertion.event_name"
+    "attribute.environment" = "has(assertion.environment) ? assertion.environment : \"\""
+    "attribute.actor"       = "assertion.actor"
   }
 
   # このリポジトリ以外のトークンは受け付けない。

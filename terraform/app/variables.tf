@@ -26,3 +26,17 @@ variable "custom_domain" {
   type        = string
   default     = ""
 }
+
+# CI が GitHub Variables（bootstrap が登録した値）を渡し、tfvars と食い違っていないか確かめるための値。
+# ローカル実行では空のまま（確認しない）。
+variable "expected_prod_site_id" {
+  description = "bootstrap が登録した本番サイト ID（CI が TF_VAR_ で渡す）"
+  type        = string
+  default     = ""
+}
+
+variable "expected_preview_site_id" {
+  description = "bootstrap が登録した検証サイト ID（CI が TF_VAR_ で渡す）"
+  type        = string
+  default     = ""
+}

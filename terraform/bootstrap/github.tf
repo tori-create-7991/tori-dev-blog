@@ -4,7 +4,6 @@
 locals {
   actions_variables = {
     GCP_PROJECT_ID      = var.project_id
-    GCP_REGION          = var.region
     WIF_PROVIDER        = google_iam_workload_identity_pool_provider.github.name
     DEPLOYER_SA         = google_service_account.deployer.email
     PREVIEW_SA          = google_service_account.preview.email
@@ -18,8 +17,9 @@ locals {
   }
 }
 
+# 値が空のもの（IndexNow を使わない場合など）は登録しない。workflow 側は空として扱う。
 resource "github_actions_variable" "this" {
-  for_each = local.actions_variables
+  for_each = { for k, v in local.actions_variables : k => v if v != "" }
 
   repository    = var.github_repo
   variable_name = each.key
@@ -79,11 +79,14 @@ resource "github_repository_ruleset" "main" {
     }
 
     required_status_checks {
+      # integration_id 15368 = GitHub Actions。同じ名前の status を他の経路から付けられても通らない
       required_check {
-        context = "build"
+        context        = "build"
+        integration_id = 15368
       }
       required_check {
-        context = "plan"
+        context        = "plan"
+        integration_id = 15368
       }
     }
   }

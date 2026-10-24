@@ -34,9 +34,11 @@ content/feed/drafts/*
 !content/feed/drafts/README.md
 
 # Terraform
-terraform/.terraform
-terraform/*.tfstate
-terraform/*.tfstate.*
-terraform/*.tfvars
-!terraform/*.tfvars.example
-terraform/crash.log
+# terraform.tfvars は秘密を含まない設定値なのでコミットする。
+# 秘密を含む変数ファイルは *.auto.tfvars か secret*.tfvars にしてコミットしない。
+terraform/**/.terraform/
+terraform/**/*.tfstate
+terraform/**/*.tfstate.*
+terraform/**/*.auto.tfvars
+terraform/**/secret*.tfvars
+terraform/**/crash.log

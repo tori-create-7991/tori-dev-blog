@@ -72,8 +72,8 @@ if (error.value) {
 const postCount = computed(() => storeCategoryPost.value?.length || 0)
 
 const breadcrumbItems = computed(() => [
-    { name: 'ホーム', path: '/' },
-    { name: 'ブログ', path: '/posts' },
+    { name: 'Home', path: '/' },
+    { name: 'Blog', path: '/posts' },
     { name: `カテゴリー: ${currentCategory.value}`, path: route.path },
 ])
 

@@ -53,8 +53,8 @@ if (!work.value) {
 const categoryLabel = computed(() => workCategoryLabel(work.value?.category))
 
 const breadcrumbItems = computed(() => [
-  { name: 'ホーム', path: '/' },
-  { name: '実績', path: '/works' },
+  { name: 'Home', path: '/' },
+  { name: 'Works', path: '/works' },
   { name: work.value?.title, path: route.path },
 ])
 

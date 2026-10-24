@@ -1,6 +1,6 @@
 <template>
   <div class="mx-auto max-w-screen-md px-4 py-10">
-    <h1 class="font-display text-2xl font-bold text-gray-900 mb-2 dark:text-white">つぶやき</h1>
+    <h1 class="font-display text-2xl font-bold text-gray-900 mb-2 dark:text-white">Feed</h1>
     <p class="mb-8 text-sm text-gray-600 dark:text-gray-300">
       X / Bluesky に書いた短文をここにまとめています。
     </p>
@@ -34,7 +34,7 @@ const { data: items } = await useAsyncData('feed-index', () => {
 
 // 0 件のうちは中身が無いページになるため noindex。件数が増えたら feedPublished を true にする
 usePageSeo({
-  title: 'つぶやき',
+  title: 'Feed',
   description: 'X / Bluesky / Instagram に書いた短文の一覧。',
   robots: !feedPublished || !items.value?.length ? 'noindex, follow' : undefined,
 })

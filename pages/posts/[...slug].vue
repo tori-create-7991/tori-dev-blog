@@ -243,8 +243,8 @@ usePageSeo({
 })
 
 const breadcrumbItems = computed(() => [
-    { name: 'ホーム', path: '/' },
-    { name: 'ブログ', path: '/posts' },
+    { name: 'Home', path: '/' },
+    { name: 'Blog', path: '/posts' },
     { name: post.value?.title, path: route.path },
 ])
 

@@ -1,6 +1,6 @@
 <template>
   <div class="mx-auto max-w-screen-xl px-4 py-10">
-    <h1 class="font-display text-2xl font-bold text-gray-900 mb-2 dark:text-white">サービス</h1>
+    <h1 class="font-display text-2xl font-bold text-gray-900 mb-2 dark:text-white">Service</h1>
     <p class="mb-8 text-sm text-gray-600 dark:text-gray-300">
       顧問・講師・開発の 3 つの関わり方があります。
     </p>
@@ -27,7 +27,7 @@ const { data: services } = await useAsyncData('service-index', () => {
 const categoryLabel = serviceCategoryLabel
 
 usePageSeo({
-  title: 'サービス',
-  description: '中小企業向けの AI 導入・DX 顧問、プログラミング研修の講師、システム開発の 3 つのサービス。',
+  title: 'Service',
+  description: 'AI 導入・DX の顧問、プログラミング研修の講師、システム開発の 3 つの関わり方。',
 })
 </script>

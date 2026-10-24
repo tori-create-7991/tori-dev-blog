@@ -34,15 +34,17 @@ elif grep -qE 'allUsers|allAuthenticatedUsers' <<<"$policy"; then echo "公開�
 else echo "OK: 公開設定なし"; fi
 
 # 旧サイト（default site）に付いている独自ドメイン（手順 4・7 で旧 TXT と旧サイトを止めるため）
-curl -sf -H "Authorization: Bearer $GOOGLE_OAUTH_ACCESS_TOKEN" \
+# Firebase Hosting の API は課金先プロジェクトの指定（X-Goog-User-Project）が無いと 403 になる
+curl -sf -H "Authorization: Bearer $GOOGLE_OAUTH_ACCESS_TOKEN" -H "X-Goog-User-Project: tori-develop" \
   "https://firebasehosting.googleapis.com/v1beta1/projects/tori-develop/sites/tori-develop/customDomains" \
   | jq -e '[.customDomains[]?.name]' || echo "取得に失敗。止める"
 
 # tfstate バケット全体の控え（このバケットには他リポジトリの state もあり、手順 2 で世代管理を有効にする前に取る）
+mkdir -p .migration-backup/tfstate-bucket   # 保存先のディレクトリが先に要る
 gcloud storage cp -r gs://tori-develop-tfstate .migration-backup/tfstate-bucket --account=ryo.tonegawa.7991@gmail.com
 ```
 
-旧サイトのドメイン一覧は `[]`（空）であることを期待する。何か出たら、手順 4 の旧 TXT の削除と手順 7 の旧サイト停止はしないで報告する。
+旧サイトのドメイン一覧は `[]`（空）であることを期待する（2026-10-24 の確認では空。本番 `tori-dev.com` は `tori-develop-blog`、`preview.tori-dev.com` は `tori-develop-preview` に付いていた）。何か出たら、手順 4 の旧 TXT の削除と手順 7 の旧サイト停止はしないで報告する。
 
 tfstate バケット `tori-develop-tfstate` は名刺サイトなど他リポジトリの state と共用している。手順 2 で入れる世代管理と古い世代の削除ルールは、
 バケット全体（他リポジトリの state も）に効く。他リポジトリの Terraform がこのバケット自体（`google_storage_bucket`）を管理していないことを確認しておく

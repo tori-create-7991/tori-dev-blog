@@ -2,7 +2,8 @@
 # 認証はローカルの GITHUB_TOKEN=$(gh auth token)。
 
 locals {
-  actions_variables = {
+  # キーは入力値だけで決まるようにする（値は apply まで分からないものがあるため、値で絞ると plan できない）
+  actions_variables = merge({
     GCP_PROJECT_ID      = var.project_id
     WIF_PROVIDER        = google_iam_workload_identity_pool_provider.github.name
     DEPLOYER_SA         = google_service_account.deployer.email
@@ -13,13 +14,14 @@ locals {
     PROD_SITE_ID        = local.prod_site_id
     PREVIEW_SITE_ID     = local.preview_site_id
     PROD_SITE_URL       = local.prod_site_url
-    INDEXNOW_KEY        = var.indexnow_key
-  }
+    },
+    # IndexNow を使わない場合は登録しない（workflow は未登録を空として扱う）
+    var.indexnow_key != "" ? { INDEXNOW_KEY = var.indexnow_key } : {},
+  )
 }
 
-# 値が空のもの（IndexNow を使わない場合など）は登録しない。workflow 側は空として扱う。
 resource "github_actions_variable" "this" {
-  for_each = { for k, v in local.actions_variables : k => v if v != "" }
+  for_each = local.actions_variables
 
   repository    = var.github_repo
   variable_name = each.key

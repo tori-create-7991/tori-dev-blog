@@ -1,5 +1,8 @@
 # 2 段構成の IaC への移行 runbook（2026-10、1 回だけ）
 
+> **使わない（記録として残しているだけ）。** 2026-11 にブログは `tori-dev-sites` へ移った（[ADR 0007](../adr/0007-move-to-tori-dev-sites.md)、[移行手順](move-to-tori-dev-sites.md)）。
+> ここにあるコマンドは旧プロジェクト `tori-develop` と旧 state を操作するので、実行しない。
+
 旧構成（Terraform 1 つ、CI がすべて apply、共有 WIF Pool、GitHub Secrets）から、
 bootstrap / app の 2 段構成（[ADR 0006](../adr/0006-two-stage-terraform.md)）へ本番を移す手順。
 

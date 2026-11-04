@@ -1,5 +1,8 @@
 # ブランチ別デプロイへの切替 runbook
 
+> **使わない（記録として残しているだけ）。** 2026-11 にブログは `tori-dev-sites` へ移った（[ADR 0007](../adr/0007-move-to-tori-dev-sites.md)、[移行手順](move-to-tori-dev-sites.md)）。
+> ここにあるコマンドは旧プロジェクト `tori-develop` と旧 state を操作するので、実行しない。
+
 > **2026-10 注記**: この runbook の `preview` ブランチと preview.tori-dev.com は廃止した。
 > 検証は PR ごとのプレビューチャネルで行う（[ADR 0006](../adr/0006-two-stage-terraform.md)、
 > 移行は [iac-two-stage-migration.md](iac-two-stage-migration.md)）。以下は 2026-09 の切替の記録として残す。

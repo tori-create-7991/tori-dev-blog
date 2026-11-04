@@ -5,14 +5,13 @@
 #
 # 検証サイトには独自ドメインを付けない。PR ごとに
 # https://<preview site id>--pr-<番号>-<hash>.web.app の URL が発行される。
-# GCP プロジェクトの default site（サイト ID = project_id）は旧 Nuxt2 サイト。削除できないので管理しない。
+# プロジェクトの default site（サイト ID = project_id）は使わない。削除できないので管理しない。
 
 resource "google_firebase_hosting_site" "blog" {
   provider = google-beta
   project  = var.project_id
   site_id  = "${var.project_id}-${var.prod_site_suffix}"
 
-  depends_on = [google_firebase_project.default]
 
   lifecycle {
     # 本番サイトは消さない（設定値の書き換えミスで作り直しにならないようにする）
@@ -31,7 +30,6 @@ resource "google_firebase_hosting_site" "preview" {
   project  = var.project_id
   site_id  = "${var.project_id}-${var.preview_site_suffix}"
 
-  depends_on = [google_firebase_project.default]
 
   lifecycle {
     precondition {
@@ -41,11 +39,6 @@ resource "google_firebase_hosting_site" "preview" {
   }
 }
 
-# 旧定義では enable_preview_site で count を付けていた。検証サイトは PR プレビューに必須なので常に作る。
-moved {
-  from = google_firebase_hosting_site.preview[0]
-  to   = google_firebase_hosting_site.preview
-}
 
 # 本番の独自ドメイン（任意）。DNS レコードは bootstrap stack が管理する。
 resource "google_firebase_hosting_custom_domain" "blog" {
@@ -71,6 +64,18 @@ output "prod_site_id" {
 output "prod_default_url" {
   description = "本番 Firebase Hosting の既定 URL"
   value       = "https://${google_firebase_hosting_site.blog.site_id}.web.app"
+}
+
+# 独自ドメインに必要な DNS の変更（所有権 TXT・証明書用の _acme-challenge TXT など）。
+# 移行やドメインの付け替えのときに、Cloudflare に足すレコードをここで確かめる。
+output "custom_domain_dns_updates" {
+  description = "独自ドメインの DNS で必要な変更（Firebase が返す値）"
+  value = length(google_firebase_hosting_custom_domain.blog) == 0 ? null : {
+    ownership_state      = google_firebase_hosting_custom_domain.blog[0].ownership_state
+    host_state           = google_firebase_hosting_custom_domain.blog[0].host_state
+    cert                 = google_firebase_hosting_custom_domain.blog[0].cert
+    required_dns_updates = google_firebase_hosting_custom_domain.blog[0].required_dns_updates
+  }
 }
 
 output "preview_site_id" {

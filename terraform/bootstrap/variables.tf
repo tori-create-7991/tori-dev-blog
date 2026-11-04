@@ -108,6 +108,9 @@ variable "existing" {
   type = object({
     import_state_bucket         = optional(bool, false)
     import_services             = optional(list(string), [])
+    import_github_settings      = optional(bool, false) # Variables・Environment・ruleset が既にある
+    production_branch_policy_id = optional(string, "")  # Environment production の main の branch policy
+    main_ruleset_id             = optional(string, "")  # ruleset main
     dns_apex_a_record_id        = optional(string, "")
     dns_ownership_txt_record_id = optional(string, "")
   })
@@ -120,4 +123,12 @@ variable "existing" {
     )
     error_message = "DNS レコードを import するには enable_cloudflare = true と custom_domain が必要です。"
   }
+}
+
+# 所有権 TXT（hosting-site=<サイト ID>）を本番サイト以外に向けるときだけ使う。
+# GCP プロジェクトを移すとき、新サイトの準備ができるまで独自ドメインを旧サイトから配信し続けるため。
+variable "dns_ownership_site_id" {
+  description = "所有権 TXT に入れるサイト ID。空なら本番サイト（<project_id>-<prod_site_suffix>）"
+  type        = string
+  default     = ""
 }

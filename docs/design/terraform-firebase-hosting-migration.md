@@ -1,5 +1,8 @@
 # Design Doc: Terraform / Firebase Hosting 移植（Option A）
 
+> **使わない（記録として残しているだけ）。** 2026-11 にブログは `tori-dev-sites` へ移った（[ADR 0007](../adr/0007-move-to-tori-dev-sites.md)、[移行手順](../runbook/move-to-tori-dev-sites.md)）。
+> ここにあるコマンドは旧プロジェクト `tori-develop` と旧 state を操作するので、実行しない。
+
 > **2026-10 注記**: Terraform は bootstrap / app の 2 段構成に移行し、`scripts/setup_gcp.sh`・content-sync・
 > Cloud Run 関連は削除した（[ADR 0006](../adr/0006-two-stage-terraform.md)）。以下は 2026-07 時点の設計の記録。
 

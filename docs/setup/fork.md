@@ -24,7 +24,7 @@ export GITHUB_TOKEN="$(gh auth token)"
 Terraform の state を置く場所が先に要るので、これだけは gcloud で作る。次の手順で bootstrap が import して、以降は Terraform で管理する。
 
 ```bash
-gcloud storage buckets create gs://<project-id>-tfstate \
+gcloud storage buckets create gs://<project-id>-<repo_slug>-tfstate \
   --project=<project-id> --location=asia-northeast1 \
   --uniform-bucket-level-access --public-access-prevention
 ```
@@ -36,10 +36,11 @@ gcloud storage buckets create gs://<project-id>-tfstate \
 | `terraform/bootstrap/terraform.tfvars` | `terraform.tfvars.example` をコピーして全部（project_id、github_owner、github_repo、repo_slug、バケット名など） |
 | `terraform/bootstrap/backend.hcl` | `bucket` と `prefix`（`terraform/<リポジトリ名>/bootstrap`） |
 | `terraform/app/terraform.tfvars` | `terraform.tfvars.example` をコピーして全部 |
-| `terraform/app/backend.hcl` | `bucket` と `prefix`（`terraform/<リポジトリ名>`。bootstrap の `app_state_prefix` と同じ） |
+| `terraform/app/backend.hcl` | `bucket` と `prefix`（`terraform/<リポジトリ名>/app`。bootstrap の `app_state_prefix` と同じ） |
 
 - 名前は 00_my_env の命名ルール（`gcp-ci-identity-naming`）に合わせて、リポジトリ名から決まる。`repo_slug` はリポジトリ名を小文字にし、`_` と `.` を `-` にしたもの。
 - `existing` は `import_state_bucket = true` だけにする（手順 1 で作ったバケットを取り込む）。
+- `dns_ownership_site_id` は書かない（GCP プロジェクトを移すときだけ使う）。
 - 独自ドメインを使わないなら `custom_domain = ""`、`enable_cloudflare = false`。
 
 ## 3. bootstrap を apply
@@ -49,7 +50,7 @@ mise exec -- terraform -chdir=terraform/bootstrap init -backend-config=backend.h
 mise exec -- terraform -chdir=terraform/bootstrap apply
 ```
 
-API の有効化、専用の WIF Pool と CI 用 SA、GitHub の Variables・Environment・main の保護ルールができる。
+API と Firebase の有効化、専用の WIF Pool と CI 用 SA、GitHub の Variables・Environment・main の保護ルールができる。
 
 Cloudflare を使う場合（`enable_cloudflare = true`）は、DNS を編集できる API トークンを環境変数 `CLOUDFLARE_API_TOKEN` に入れてから実行する。
 発行用トークン（User API Tokens: Edit 権限）を Secret Manager に置いて `scripts/with-cloudflare-token.sh` を使えば、
@@ -62,7 +63,7 @@ CF_ISSUER_SECRET=<secret 名> CF_ISSUER_PROJECT=<GCP プロジェクト> \
 
 ## 4. app を apply（初回だけローカルで）
 
-初回は Firebase の有効化（`google_firebase_project`）を含むので、CI の SA ではなく自分の権限で実行する。2 回目以降は CI が main への push で apply する。
+初回は自分の権限で実行してもよい（CI の SA でもできる。Firebase の有効化は bootstrap が済ませている）。2 回目以降は CI が main への push で apply する。
 
 ```bash
 mise exec -- terraform -chdir=terraform/app init -backend-config=backend.hcl

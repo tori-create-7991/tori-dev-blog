@@ -1,6 +1,6 @@
 # 0001. GCP project `tori-develop` を再利用し、新規 Firebase Hosting サイトとして分離する
 
-Status: Accepted
+Status: Superseded by [0007](0007-move-to-tori-dev-sites.md)（2026-11-04）
 
 ## Context
 

@@ -6,9 +6,9 @@ github_owner = "your-github-user"
 github_repo  = "tori-dev-blog"
 repo_slug    = "tori-dev-blog" # リポジトリ名を小文字にし _ と . を - にしたもの
 
-tf_state_bucket          = "your-gcp-project-id-tfstate" # 手順書の gcloud コマンドで作ったバケット
+tf_state_bucket          = "your-gcp-project-id-tori-dev-blog-tfstate" # 手順書の gcloud コマンドで作ったバケット（1 リポジトリ 1 バケット）
 tf_state_bucket_location = "ASIA-NORTHEAST1"
-app_state_prefix         = "terraform/tori-dev-blog" # terraform/app/backend.hcl と同じ
+app_state_prefix         = "terraform/tori-dev-blog/app" # terraform/app/backend.hcl と同じ
 
 prod_site_suffix    = "blog"
 preview_site_suffix = "preview"

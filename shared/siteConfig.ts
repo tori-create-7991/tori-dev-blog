@@ -109,8 +109,6 @@ export const footerItem = [
 ];
 
 
-// announcements on/off
-export const announcementsFlag = false
 
 // つぶやき(Feed)を公開するか。false にすると noindex + sitemap 除外 + フッター非表示になる。
 // /feed ページ自体は投稿 0 件の間は feedPublished に関わらず noindex のまま(pages/feed/index.vue)。

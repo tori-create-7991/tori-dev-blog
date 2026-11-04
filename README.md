@@ -25,7 +25,7 @@ GCP と GitHub があれば同じ構成を再現できる（[docs/setup/fork.md]
 | サイト | Nuxt 3（全ページを事前生成）、@nuxt/content v3、@nuxt/ui、Tailwind CSS 4、Pinia、fuse.js |
 | 配信 | Firebase Hosting（本番サイトと、PR ごとのプレビューチャネルを置く検証サイト） |
 | DNS | Cloudflare（DNS only） |
-| インフラ | Terraform 2 段構成（`terraform/bootstrap` は人がローカルで、`terraform/app` は CI が apply）。[ADR 0006](docs/adr/0006-two-stage-terraform.md) |
+| インフラ | Terraform 2 段構成（`terraform/bootstrap` は人がローカルで、`terraform/app` は CI が apply）。[ADR 0006](docs/adr/0006-two-stage-terraform.md)。GCP プロジェクトはサイト専用の `tori-dev-sites`（[ADR 0007](docs/adr/0007-move-to-tori-dev-sites.md)） |
 | CI | GitHub Actions。PR でビルド・プレビュー・plan、main で apply と配信。Secrets は使わない（Workload Identity Federation） |
 | 依存の更新 | Dependabot（週 1 回）。Actions はコミット SHA で固定 |
 

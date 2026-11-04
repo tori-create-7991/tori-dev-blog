@@ -68,8 +68,9 @@ locals {
       "roles/firebase.viewer",
       "roles/serviceusage.serviceUsageConsumer",
     ]
+    # roles/viewer は使わない（プロジェクト内のすべてを読めてしまうため）。plan に要るのは Firebase の読み取りだけ。
     planner = [
-      "roles/viewer",
+      "roles/firebase.viewer",
       "roles/serviceusage.serviceUsageConsumer",
     ]
   }
@@ -96,13 +97,12 @@ resource "google_project_iam_member" "ci" {
 }
 
 # tfstate バケットへの権限はバケット単位で、さらに IAM Condition で app stack の state だけに絞る。
-# このバケットには他リポジトリや bootstrap stack の state もあるので、それらは読み書きさせない。
-# バケット自体への条件（resource.name == バケット）は、Terraform の GCS backend が
-# オブジェクト一覧を取るために要る（一覧で見えるのは名前だけで、中身は読めない）。
+# このバケットには bootstrap stack の state もあるので、それは読み書きさせない。
+# 一覧（storage.objects.list）はバケットに対する判定なので、一覧の prefix で絞る（ほかの state の名前も見せない）。
 locals {
   bucket_resource    = "projects/_/buckets/${google_storage_bucket.tfstate.name}"
-  app_state_objects  = "${local.bucket_resource}/objects/${var.app_state_prefix}/default."
-  app_state_cel_expr = "resource.name == \"${local.bucket_resource}\" || resource.name.startsWith(\"${local.app_state_objects}\")"
+  app_state_dir      = "${var.app_state_prefix}/"
+  app_state_cel_expr = "(resource.name == \"${local.bucket_resource}\" && api.getAttribute(\"storage.googleapis.com/objectListPrefix\", \"\").startsWith(\"${local.app_state_dir}\")) || resource.name.startsWith(\"${local.bucket_resource}/objects/${local.app_state_dir}\")"
 }
 
 # deployer は app stack の state を読み書きする（apply とロック）。
@@ -113,7 +113,7 @@ resource "google_storage_bucket_iam_member" "deployer_state" {
 
   condition {
     title       = "app-state-only"
-    description = "app stack の state (${var.app_state_prefix}/default.*) だけ"
+    description = "app stack の state (${var.app_state_prefix}/) だけ"
     expression  = local.app_state_cel_expr
   }
 }
@@ -126,7 +126,7 @@ resource "google_storage_bucket_iam_member" "planner_state" {
 
   condition {
     title       = "app-state-only"
-    description = "app stack の state (${var.app_state_prefix}/default.*) だけ"
+    description = "app stack の state (${var.app_state_prefix}/) だけ"
     expression  = local.app_state_cel_expr
   }
 }

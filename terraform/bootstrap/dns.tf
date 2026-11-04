@@ -30,7 +30,7 @@ resource "cloudflare_dns_record" "ownership_txt" {
   zone_id = var.cloudflare_zone_id
   name    = var.custom_domain
   type    = "TXT"
-  content = "hosting-site=${local.prod_site_id}"
+  content = "hosting-site=${local.ownership_site_id}"
   ttl     = 1
   proxied = false
   comment = "Firebase Hosting サイト所有権（apex -> 本番サイト）"

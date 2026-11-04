@@ -1,4 +1,6 @@
-# この stack と app stack・CI が使う API。無効化はしない（他の用途が使っている可能性があるため）。
+# この stack と app stack・CI が使う API。無効化はしない。
+# プロジェクトを名刺サイト（01_self-digital-business-card）と共有しているので、
+# API と Firebase の有効化はこのリポジトリだけが持つ（名刺側は持たない）。
 locals {
   services = toset([
     "cloudresourcemanager.googleapis.com",

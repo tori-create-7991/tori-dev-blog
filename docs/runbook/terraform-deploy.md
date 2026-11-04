@@ -8,7 +8,7 @@
 
 | | 中身 | 誰がいつ apply するか |
 |---|---|---|
-| `terraform/bootstrap/` | API、tfstate バケット、WIF Pool・Provider、CI 用 SA と権限、Cloudflare DNS、GitHub の Variables・Environment・ruleset | 人がローカルで、変えるときだけ |
+| `terraform/bootstrap/` | API と Firebase の有効化、tfstate バケット、WIF Pool・Provider、CI 用 SA と権限、Cloudflare DNS、GitHub の Variables・Environment・ruleset | 人がローカルで、変えるときだけ |
 | `terraform/app/` | Firebase Hosting の本番・検証サイト、本番の独自ドメイン | CI が main への push で（`terraform.yml`） |
 | サイトの中身 | Nuxt のビルド結果 | CI が main への push で、`terraform.yml` の apply が成功したあと本番へ（`deploy.yml`）。PR ごとにプレビューへ（`pr-preview.yml`） |
 

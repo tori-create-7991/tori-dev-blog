@@ -25,7 +25,6 @@
 <script setup lang="ts">
 // タイトルと記事本文を検索している
 import Fuse from 'fuse.js'
-import { ref, computed } from 'vue'
 
 const query = ref('')
 const { data: searchData } = await useAsyncData('search-data', () => queryCollectionSearchSections('posts'))
@@ -38,14 +37,8 @@ const fuse = new Fuse(searchData.value || [], {
 
 const searchResults = computed(() => {
   if (!query.value) return []
-  const ids = fuse.search(query.value).map(result => {
-    console.log(result)
-    return result.item.id.split('#')[0]
-  })
-  console.log(ids)
+  const ids = fuse.search(query.value).map(result => result.item.id.split('#')[0])
   if (!latestPosts.value) return []
-
-  console.log(latestPosts.value)
   return latestPosts.value.filter(post => ids.includes(post.path))
 })
 

@@ -52,7 +52,6 @@
 
 <script setup>
 import { siteConfig, sidebarItem } from '#shared/siteConfig'
-import { useRoute } from 'vue-router'
 
 const toolbarTitle = siteConfig.siteTitle
 const mobileMenuOpen = ref(false)

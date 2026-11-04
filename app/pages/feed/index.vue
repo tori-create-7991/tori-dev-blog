@@ -24,7 +24,7 @@
 
 <script setup>
 import { useFormatDate } from '~/composables/useFormatDate'
-import { feedPublished } from '~/siteConfig'
+import { feedPublished } from '#shared/siteConfig'
 
 const { formatDate } = useFormatDate()
 

@@ -48,7 +48,7 @@
 </template>
 
 <script setup>
-import { siteConfig, workCategoryLabel } from '~/siteConfig'
+import { siteConfig, workCategoryLabel } from '#shared/siteConfig'
 import ArticleList from '~/components/ArticleList.vue'
 
 const { data: works } = await useAsyncData('home-works', () => {

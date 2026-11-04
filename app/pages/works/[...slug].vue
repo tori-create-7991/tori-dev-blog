@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { workCategoryLabel } from '~/siteConfig'
+import { workCategoryLabel } from '#shared/siteConfig'
 
 const route = useRoute()
 

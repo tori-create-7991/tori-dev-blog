@@ -168,7 +168,7 @@
 
 <script setup>
 import { useFormatDate } from '~/composables/useFormatDate'
-import { authorName, authorJobTitle } from '~/siteConfig'
+import { authorName, authorJobTitle } from '#shared/siteConfig'
 
 const route = useRoute()
 const { formatDate } = useFormatDate()

@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { serviceCategoryLabel } from '~/siteConfig'
+import { serviceCategoryLabel } from '#shared/siteConfig'
 
 const { data: services } = await useAsyncData('service-index', () => {
   return queryCollection('service').all()

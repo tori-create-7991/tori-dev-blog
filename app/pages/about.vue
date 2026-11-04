@@ -42,7 +42,7 @@ import {
     authorJobTitle,
     authorArea,
     activeSocialProfiles,
-} from '~/siteConfig'
+} from '#shared/siteConfig'
 
 const { data: post } = await useAsyncData('/about', () => {
     return queryCollection('sideContent').path('/about').first()

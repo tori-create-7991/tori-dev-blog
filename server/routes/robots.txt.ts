@@ -1,4 +1,4 @@
-import { siteConfig } from '~/siteConfig'
+import { siteConfig } from '#shared/siteConfig'
 
 /**
  * robots.txt を環境で出し分ける。

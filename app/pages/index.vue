@@ -8,7 +8,7 @@
 <script setup>
 import Home from '../components/Home.vue'
 import HomeNews from '~/components/HomeNews.vue'
-import { announcementsFlag, siteConfig } from '../siteConfig'
+import { announcementsFlag, siteConfig } from '#shared/siteConfig'
 
 const mainStore = useStore()
 

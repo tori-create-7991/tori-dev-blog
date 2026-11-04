@@ -21,7 +21,7 @@
 </template>
 
 <script setup>
-import { workCategories } from '~/siteConfig'
+import { workCategories } from '#shared/siteConfig'
 
 const { data: works } = await useAsyncData('works-index', () => {
   return queryCollection('works').order('date', 'DESC').all()

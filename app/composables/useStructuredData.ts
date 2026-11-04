@@ -7,7 +7,7 @@ import {
   authorDescription,
   authorKnowsAbout,
   activeSocialProfiles,
-} from '~/siteConfig'
+} from '#shared/siteConfig'
 
 interface PostLike {
   title?: string

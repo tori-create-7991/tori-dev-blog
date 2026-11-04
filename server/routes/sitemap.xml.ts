@@ -1,4 +1,4 @@
-import { sidebarItem, footerItem, secondaryItem, feedPublished } from '~/siteConfig'
+import { sidebarItem, footerItem, secondaryItem, feedPublished } from '#shared/siteConfig'
 
 const escapeXml = (value: string) =>
   value

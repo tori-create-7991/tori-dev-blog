@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-import { siteConfig } from '~/siteConfig'
+import { siteConfig } from '#shared/siteConfig'
 
 const props = defineProps({
   error: {

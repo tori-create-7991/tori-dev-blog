@@ -7,7 +7,7 @@
 </template>
 
 <script setup>
-import { siteConfig } from '~/siteConfig'
+import { siteConfig } from '#shared/siteConfig'
 
 const config = useRuntimeConfig()
 const siteUrl = String(config.public.siteUrl).replace(/\/$/, '')

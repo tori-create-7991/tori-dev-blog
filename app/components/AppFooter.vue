@@ -79,7 +79,7 @@
 </template>
 
 <script setup>
-import { footerItem, sidebarItem, secondaryItem, feedPublished, activeSocialProfiles } from "~/siteConfig";
+import { footerItem, sidebarItem, secondaryItem, feedPublished, activeSocialProfiles } from '#shared/siteConfig';
 
 // つぶやき(Feed)は公開フラグが立っているときだけフッターに出す
 const mainItems = computed(() => [

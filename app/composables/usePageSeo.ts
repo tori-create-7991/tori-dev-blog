@@ -1,4 +1,4 @@
-import { siteConfig } from '~/siteConfig'
+import { siteConfig } from '#shared/siteConfig'
 
 interface PageSeoOptions {
   /** ページ固有のタイトル。省略時は siteConfig.siteTitle のみ */

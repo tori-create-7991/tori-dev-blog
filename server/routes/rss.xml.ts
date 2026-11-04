@@ -1,4 +1,4 @@
-import { siteConfig, authorName } from '~/siteConfig'
+import { siteConfig, authorName } from '#shared/siteConfig'
 
 const escapeXml = (value: string) =>
   value

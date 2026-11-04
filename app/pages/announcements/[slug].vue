@@ -88,7 +88,7 @@
 </template>
 
 <script setup>
-import { siteConfig } from '~/siteConfig'
+import { siteConfig } from '#shared/siteConfig'
 import { useFormatDate } from '~/composables/useFormatDate'
 
 const route = useRoute()

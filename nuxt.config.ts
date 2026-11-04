@@ -1,17 +1,15 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
+import fs from 'node:fs'
+import path from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
-import { defineNuxtConfig } from 'nuxt/config'
-import fs from 'fs'
-import path from 'path'
 import matter from 'gray-matter'
+import { defineNuxtConfig } from 'nuxt/config'
 
 import { sidebarItem, footerItem } from './shared/siteConfig'
 
-
-
 export default defineNuxtConfig({
-    compatibilityDate: '2024-11-01',
+    compatibilityDate: '2026-11-05',
     devtools: { enabled: true },
     ssr: true,
     nitro: {
@@ -27,6 +25,7 @@ export default defineNuxtConfig({
         prerender: {
             autoSubfolderIndex: false,
             failOnError: false,
+            crawlLinks: true,
             routes: [
                 ...sidebarItem.map(item => item.to),
                 ...footerItem.map(item => item.to),
@@ -35,61 +34,26 @@ export default defineNuxtConfig({
                 '/robots.txt'
             ]
         },
-
     },
 
     hooks: {
-        async 'prerender:routes'(ctx) {
-            // 投稿データを取得
+        // カテゴリー・タグのページを生成対象に足す。リンクのクロールだけでは、
+        // 「Next.js」のように拡張子に見える名前のページが飛ばされるため
+        'prerender:routes'(ctx) {
             const postsDir = path.join(process.cwd(), 'content', 'posts')
-            const files = fs.readdirSync(postsDir)
-            const posts = files
-                .filter(file => file.endsWith('.md'))
-                .map(file => {
-                    const content = fs.readFileSync(path.join(postsDir, file), 'utf-8')
-                    const { data } = matter(content)
-                    return data
-                })
-
-            // カテゴリーとタグのルートを追加
-            if (posts) {
-                const categories = new Set<string>()
-                const tags = new Set<string>()
-
-                // 投稿からカテゴリーとタグを収集
-                posts.forEach((post: { categories?: string[], tags?: string[] }) => {
-                    if (post.categories) {
-                        post.categories.forEach((category: string) => {
-                            categories.add(category)
-                        })
-                    }
-                    if (post.tags) {
-                        post.tags.forEach((tag: string) => {
-                            tags.add(tag)
-                        })
-                    }
-                })
-
-                // カテゴリーページのルートを追加
-                categories.forEach((category) => {
-                    ctx.routes.add(`/category/${category}`)
-                })
-
-                // タグページのルートを追加
-                tags.forEach((tag) => {
-                    ctx.routes.add(`/tag/${tag}`)
-                })
+            for (const file of fs.readdirSync(postsDir).filter(f => f.endsWith('.md'))) {
+                const { data } = matter(fs.readFileSync(path.join(postsDir, file), 'utf-8'))
+                for (const category of data.categories ?? []) ctx.routes.add(`/category/${category}`)
+                for (const tag of data.tags ?? []) ctx.routes.add(`/tag/${tag}`)
             }
-        }
+        },
     },
 
     modules: [
         '@nuxt/content',
-        '@nuxt/eslint',
         '@nuxt/fonts',
         '@nuxt/image',
         '@nuxt/ui',
-        '@pinia/nuxt',
     ],
 
     // 旧tori-dev.com(Nuxt2/Vuetify dark theme)の配色に合わせ、ダーク固定にする
@@ -99,12 +63,6 @@ export default defineNuxtConfig({
     },
 
     image: {
-    //     provider: 'ipxStatic',
-    //     ipxStatic: {
-    //         baseURL: '/',
-    //         dir: 'public',
-    //         maxAge: 60 * 60 * 24 * 7 // 7 days
-    //     },
         quality: 80,
         format: ['webp'],
         screens: {
@@ -128,25 +86,9 @@ export default defineNuxtConfig({
 
     vite: {
         plugins: [tailwindcss()],
-        build: {
-            sourcemap: true,
-            cssCodeSplit: true
-        },
-        css: {
-            devSourcemap: true
-        }
     },
-
 
     css: ['~/assets/css/main.css'],
-
-    content: {
-        // 基本的なコンテンツ設定
-    },
-
-    dir: {
-        public: process.env.NODE_ENV === 'production' ? 'public' : 'public_dev'
-    },
 
     runtimeConfig: {
         public: {
@@ -157,10 +99,4 @@ export default defineNuxtConfig({
             siteEnv: process.env.NUXT_PUBLIC_SITE_ENV || 'production',
         },
     },
-
-
-    // // Add static file handling configuration
-    // routeRules: {
-    //     '/images/**': { static: true }
-    // }
 })

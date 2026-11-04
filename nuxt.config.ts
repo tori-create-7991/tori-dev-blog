@@ -90,6 +90,12 @@ export default defineNuxtConfig({
 
     css: ['~/assets/css/main.css'],
 
+    content: {
+        // Node 24 組み込みの node:sqlite を使う。指定しないと better-sqlite3
+        // （ネイティブモジュール）を要求され、CI の npm ci が止まる
+        experimental: { sqliteConnector: 'native' },
+    },
+
     runtimeConfig: {
         public: {
             siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://tori-dev.com',

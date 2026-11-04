@@ -7,20 +7,20 @@
     </h1>
 
     <div class="flex flex-wrap gap-2 mb-6">
-      <span
-        v-for="category in mainStore.categories"
+      <NuxtLink
+        v-for="category in categories"
         :key="category"
+        :to="categoryPath(category)"
         class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer dark:bg-gray-800"
-        @click="moveCategory(category)"
       >
         {{ category }}
-      </span>
+      </NuxtLink>
     </div>
 
     <section>
       <ArticleList
-        v-if="storeCategoryPost && storeCategoryPost.length > 0"
-        :articles="storeCategoryPost"
+        v-if="categoryPost && categoryPost.length > 0"
+        :articles="categoryPost"
       />
       <div v-else class="text-center py-8">
         <p class="text-gray-600 dark:text-gray-300">このカテゴリーに関連する記事はありません</p>
@@ -30,46 +30,21 @@
 </template>
 
 <script setup>
-const mainStore = useStore()
 const route = useRoute()
-const { moveCategory } = useCategory();
-const currentCategory = ref((route.params.category))
+const { categories } = await usePostTaxonomy()
+const currentCategory = ref(route.params.category)
 
-// storeCategoryPostをcomputedプロパティとして定義
-const storeCategoryPost = computed(() => mainStore.getCategoryPost)
-
-// カテゴリーに基づいて記事を取得する関数
-const fetchCategoryPosts = async (category) => {
-    try {
-        if (!category) return []
-        console.log("fetchCategoryPosts", category)
-        console.log("currentCategory", currentCategory.value)
-
-        return queryCollection('posts')
-            .where('categories', 'LIKE', `%${category}%`)
-            .select('path', 'title', 'description', 'date', 'image', 'tags', 'categories')
-            .order('id', 'DESC')
-            .all()
-    } catch (error) {
-        console.error('Error fetching category posts:', error)
-        return []
-    }
-}
-
-// SSG用の初期データ取得
-const { data: categoryPost, error } = await useAsyncData(route.path, () =>
-    fetchCategoryPosts(currentCategory.value)
+// カテゴリーに基づいて記事を取得する
+const { data: categoryPost } = await useAsyncData(route.path, () =>
+    queryCollection('posts')
+        .select('path', 'title', 'description', 'date', 'image', 'tags', 'categories')
+        .order('id', 'DESC')
+        .all()
+        // SQL の LIKE だと部分一致・大文字小文字無視になり、記号を含む名前は弾かれるので、ここで完全一致で絞る
+        .then(posts => posts.filter(post => post.categories?.includes(currentCategory.value)))
 )
 
-// 初期データの設定
-if (error.value) {
-    console.error('Error loading initial data:', error.value)
-    mainStore.setCategoryPost([])
-} else {
-    mainStore.setCategoryPost(categoryPost.value)
-}
-
-const postCount = computed(() => storeCategoryPost.value?.length || 0)
+const postCount = computed(() => categoryPost.value?.length || 0)
 
 const breadcrumbItems = computed(() => [
     { name: 'Home', path: '/' },

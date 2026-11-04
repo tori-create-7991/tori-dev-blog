@@ -7,18 +7,18 @@
         </h1>
 
         <div class="flex flex-wrap gap-2 mb-6">
-            <span
-                v-for="tag in mainStore.tags"
+            <NuxtLink
+                v-for="tag in tags"
                 :key="tag"
+                :to="tagPath(tag)"
                 class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer dark:bg-gray-800"
-                @click="moveTag(tag)"
             >
                 {{ tag }}
-            </span>
+            </NuxtLink>
         </div>
 
         <section>
-            <ArticleList v-if="storeTagPost && storeTagPost.length > 0" :articles="storeTagPost" />
+            <ArticleList v-if="tagPost && tagPost.length > 0" :articles="tagPost" />
             <div v-else class="text-center py-8">
                 <p class="text-gray-600 dark:text-gray-300">このタグに関連する記事はありません</p>
             </div>
@@ -27,47 +27,21 @@
 </template>
 
 <script setup>
-const mainStore = useStore()
 const route = useRoute()
-const { moveTag } = useTag();
-const currentTag = ref((route.params.tag))
+const { tags } = await usePostTaxonomy()
+const currentTag = ref(route.params.tag)
 
-// storeTagPostをcomputedプロパティとして定義
-const storeTagPost = computed(() => mainStore.getTagPost)
-// const storeTag = computed(() => mainStore.getTag)
-
-// タグに基づいて記事を取得する関数
-const fetchTagPosts = async (tag) => {
-    try {
-        if (!tag) return []
-        console.log("fetchTagPosts", tag)
-        console.log("currentTag", currentTag.value)
-
-        return queryCollection('posts')
-            .where('tags', 'LIKE', `%${tag}%`)
-            .select('path', 'title', 'description', 'date', 'image', 'tags', 'categories')
-            .order('id', 'DESC')
-            .all()
-    } catch (error) {
-        console.error('Error fetching tag posts:', error)
-        return []
-    }
-}
-
-// SSG用の初期データ取得
-const { data: tagPost, error } = await useAsyncData(route.path, () =>
-    fetchTagPosts(currentTag.value)
+// タグに基づいて記事を取得する
+const { data: tagPost } = await useAsyncData(route.path, () =>
+    queryCollection('posts')
+        .select('path', 'title', 'description', 'date', 'image', 'tags', 'categories')
+        .order('id', 'DESC')
+        .all()
+        // SQL の LIKE だと部分一致・大文字小文字無視になり、記号を含む名前は弾かれるので、ここで完全一致で絞る
+        .then(posts => posts.filter(post => post.tags?.includes(currentTag.value)))
 )
 
-// 初期データの設定
-if (error.value) {
-    console.error('Error loading initial data:', error.value)
-    mainStore.setTagPost([])
-} else {
-    mainStore.setTagPost(tagPost.value)
-}
-
-const postCount = computed(() => storeTagPost.value?.length || 0)
+const postCount = computed(() => tagPost.value?.length || 0)
 
 const breadcrumbItems = computed(() => [
     { name: 'Home', path: '/' },
@@ -82,9 +56,6 @@ usePageSeo({
     description: `「${currentTag.value}」タグが付いた記事の一覧（${postCount.value}件）。`,
     robots: postCount.value <= 1 ? 'noindex, follow' : undefined,
 })
-
-
-
 </script>
 
 <style></style>

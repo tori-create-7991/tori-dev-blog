@@ -3,6 +3,17 @@
     <h1 class="mb-4 font-display text-xl font-bold text-gray-900 dark:text-white">
       カテゴリー一覧
     </h1>
+
+    <div class="flex flex-wrap gap-2 mb-6">
+      <NuxtLink
+        v-for="category in categories"
+        :key="category"
+        :to="categoryPath(category)"
+        class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer dark:bg-gray-800"
+      >
+        {{ category }}
+      </NuxtLink>
+    </div>
     <section>
       <ArticleList
         :articles="allPosts"
@@ -12,7 +23,7 @@
 </template>
 
 <script setup>
-const mainStore = useStore()
+const { categories } = await usePostTaxonomy()
 
 const { data: allPosts } = await useAsyncData('all-posts', () =>
     queryCollection('posts')
@@ -25,8 +36,6 @@ usePageSeo({
   title: 'カテゴリー一覧',
   description: 'ブログ記事のカテゴリー一覧。',
 })
-
-mainStore.setCategoryPost(allPosts.value)
 </script>
 
 <style>

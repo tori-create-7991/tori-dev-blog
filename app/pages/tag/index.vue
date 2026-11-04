@@ -5,14 +5,14 @@
         </h1>
 
         <div class="flex flex-wrap gap-2 mb-6">
-            <span
-                v-for="tag in mainStore.tags"
+            <NuxtLink
+                v-for="tag in tags"
                 :key="tag"
-                @click="moveTag(tag)"
+                :to="tagPath(tag)"
                 class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer dark:bg-gray-800"
             >
                 {{ tag }}
-            </span>
+            </NuxtLink>
         </div>
 
         <section>
@@ -22,8 +22,7 @@
 </template>
 
 <script setup>
-const mainStore = useStore()
-const { moveTag } = useTag();
+const { tags } = await usePostTaxonomy()
 
 // すべての投稿を取得
 const { data: allPosts } = await useAsyncData('all-posts', () =>
@@ -32,8 +31,6 @@ const { data: allPosts } = await useAsyncData('all-posts', () =>
         .order('date', 'DESC')
         .all()
 )
-
-mainStore.setTagPost(allPosts.value)
 
 usePageSeo({
     title: 'タグ一覧',

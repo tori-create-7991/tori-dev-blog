@@ -33,15 +33,14 @@
             {{ formatDate(article.date) }}
           </time>
           <div class="flex flex-wrap gap-2">
-            <button
+            <NuxtLink
               v-for="tag in article.tags"
               :key="tag"
-              type="button"
+              :to="tagPath(tag)"
               class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer dark:bg-gray-800 dark:text-gray-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#A2A897]"
-              @click="moveTag(tag)"
             >
               {{ tag }}
-            </button>
+            </NuxtLink>
           </div>
         </div>
       </div>
@@ -51,10 +50,8 @@
 
 <script setup>
 import { useFormatDate } from "~/composables/useFormatDate";
-import { useTag } from "~/composables/useTag";
 
 const { formatDate } = useFormatDate();
-const { moveTag } = useTag();
 
 // <time datetime> は ISO 8601 で出す
 const isoDate = (value) => {

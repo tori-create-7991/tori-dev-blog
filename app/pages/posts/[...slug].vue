@@ -62,16 +62,11 @@
                     </span>
                 </div>
                 <div class="flex flex-wrap items-center gap-3 mt-3 text-sm">
-                    <UBadge
-                        v-for="tag in post?.tags"
-                        :key="tag"
-                        color="neutral"
-                        variant="subtle"
-                        class="cursor-pointer"
-                        @click="moveTag(tag)"
-                    >
-                        {{ tag }}
-                    </UBadge>
+                    <NuxtLink v-for="tag in post?.tags" :key="tag" :to="tagPath(tag)">
+                        <UBadge color="neutral" variant="subtle" class="cursor-pointer">
+                            {{ tag }}
+                        </UBadge>
+                    </NuxtLink>
                 </div>
                 <div class="prose max-w-none mt-8">
                     <ContentRenderer :value="post" />
@@ -172,7 +167,6 @@ import { authorName, authorJobTitle } from '#shared/siteConfig'
 
 const route = useRoute()
 const { formatDate } = useFormatDate()
-const { moveTag } = useTag()
 
 // <time datetime> 用。ISO 8601（タイムゾーン付き）で出す
 const isoDate = (value) => {
@@ -210,17 +204,18 @@ if (!post.value) {
 }
 
 // 関連記事の取得
-const { data: categoryPost } = await useAsyncData(`categoryPost:${route.path}`, () => {
-    if (post.value?.categories) {
-        return queryCollection('posts')
-            .select('path', 'title', 'description', 'date', 'image', 'tags')
-            .where('categories', 'LIKE', `%${post.value.categories[0]}%`)
-            .where('path', '!=', route.path)
-            .order('date', 'DESC')
-            .limit(3)
-            .all()
-    }
-    return []
+// 同じカテゴリー（先頭のもの）の記事を新しい順に 3 件。絞り込みは SQL の LIKE ではなくここで行う
+// （LIKE は部分一致になり、記号や日本語を含む値は @nuxt/content のクエリ検査で弾かれる）
+const { data: categoryPost } = await useAsyncData(`categoryPost:${route.path}`, async () => {
+    const category = post.value?.categories?.[0]
+    if (!category) return []
+    const posts = await queryCollection('posts')
+        .select('path', 'title', 'description', 'date', 'image', 'tags', 'categories')
+        .order('date', 'DESC')
+        .all()
+    return posts
+        .filter(p => p.path !== route.path && p.categories?.includes(category))
+        .slice(0, 3)
 })
 
 // meta: canonical / OGP / Twitter カード / article:published_time をまとめて出力する。

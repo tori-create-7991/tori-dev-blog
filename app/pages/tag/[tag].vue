@@ -29,7 +29,7 @@
 <script setup>
 const route = useRoute()
 const { tags } = await usePostTaxonomy()
-const currentTag = ref(route.params.tag)
+const currentTag = computed(() => route.params.tag)
 
 // タグに基づいて記事を取得する
 const { data: tagPost } = await useAsyncData(route.path, () =>

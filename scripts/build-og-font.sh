@@ -35,7 +35,10 @@ freq = json.load(open(f"{work}/freq.json"))
 kanji = [r[0] for r in freq if len(r[0]) == 1 and 0x4e00 <= ord(r[0]) <= 0x9fff]
 chars |= set(kanji[:3000])
 root = pathlib.Path(".")
-for p in list(root.glob("content/**/*.md")) + [root / "siteConfig.ts"]:
+site_config = root / "shared" / "siteConfig.ts"
+if not site_config.exists():
+    raise SystemExit(f"{site_config} がありません（サイト名などの文字が OG フォントから抜けるので止める）")
+for p in list(root.glob("content/**/*.md")) + [site_config]:
     try: chars |= set(p.read_text(encoding="utf-8"))
     except Exception: pass
 chars = {c for c in chars if ord(c) > 0x1f and ord(c) != 0x7f}

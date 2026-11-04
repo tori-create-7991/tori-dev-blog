@@ -32,7 +32,7 @@
 <script setup>
 const route = useRoute()
 const { categories } = await usePostTaxonomy()
-const currentCategory = ref(route.params.category)
+const currentCategory = computed(() => route.params.category)
 
 // カテゴリーに基づいて記事を取得する
 const { data: categoryPost } = await useAsyncData(route.path, () =>

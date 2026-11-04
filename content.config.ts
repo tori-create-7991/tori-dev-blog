@@ -1,11 +1,11 @@
-import { defineContentConfig, defineCollection,z } from '@nuxt/content'
+import { defineContentConfig, defineCollection, z } from '@nuxt/content'
 
 export default defineContentConfig({
   collections: {
     content: defineCollection({
       type: 'page',
       // drafts/ を除外しないと、未使用のコレクションでも SQL ダンプ
-      // (/__nuxt_content/content/sql_dump.html) 経由で下書きが本番に公開される。
+      // (/__nuxt_content/content/sql_dump.txt) 経由で下書きが本番に公開される。
       // ADR 0004 改訂節 / npm run check-drafts 参照
       source: {
         include: '**/*.md',
@@ -46,23 +46,6 @@ export default defineContentConfig({
         note_id: z.string().nullable().optional(),
         private: z.boolean().optional(),
         topics: z.array(z.string()).optional(),
-      }),
-    }),
-    // docs: defineCollection({
-    //   // Load every file inside the `content` directory
-    //   source: '**',
-    //   // Specify the type of content in this collection
-    //   type: 'page'
-    // }),
-    announcements: defineCollection({
-      source: 'announcements/*.md',
-      type: 'page',
-      schema: z.object({
-        title: z.string(),
-        description: z.string(),
-        date: z.date(),
-        image: z.string(),
-        advertisements: z.array(z.string()),
       }),
     }),
     sideContent: defineCollection({

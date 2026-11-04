@@ -77,7 +77,7 @@ mise exec -- terraform -chdir=terraform/app apply
 
 | 場所 | 内容 |
 |---|---|
-| `siteConfig.ts` | サイト名・著者・メニュー・SNS |
+| `shared/siteConfig.ts` | サイト名・著者・メニュー・SNS |
 | `content/` | 記事・作品・サービス・プロフィール（**記事と画像は All Rights Reserved**。[content-license.md](../content-license.md)） |
 | `public/` | 画像、`llms.txt`、IndexNow のキーファイル（`<key>.txt`。使うなら bootstrap の `indexnow_key` と同じ名前にする） |
 | `scripts/build-og-images.py` | OG 画像に入るサイト名と著者名 |

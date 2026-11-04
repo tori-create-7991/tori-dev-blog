@@ -9,7 +9,7 @@
     記事は十数本の規模なので、依存を増やさず Pillow で事前生成する。
 
 色の決め方:
-    composables/useEyecatch.ts と同じ FNV-1a ハッシュを記事パスに掛けて
+    app/composables/useEyecatch.ts と同じ FNV-1a ハッシュを記事パスに掛けて
     色相・パターンを決める。サイト内の CSS サムネイル(ArticleThumb.vue)と
     同じ見た目になる。
 
@@ -50,7 +50,7 @@ MUTED = (160, 158, 151)
 
 
 def fnv1a(text: str) -> int:
-    """composables/useEyecatch.ts と同じハッシュ。色を一致させるため実装を揃える。"""
+    """app/composables/useEyecatch.ts と同じハッシュ。色を一致させるため実装を揃える。"""
     h = 0x811C9DC5
     for ch in text:
         h ^= ord(ch) & 0xFFFFFFFF

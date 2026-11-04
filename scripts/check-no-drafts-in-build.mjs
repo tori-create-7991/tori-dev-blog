@@ -1,7 +1,7 @@
 // ビルド出力に下書き（content/*/drafts/）が混ざっていないか検査する。
 //
 // @nuxt/content v3 は全コレクションの SQL ダンプを
-// .output/public/__nuxt_content/<collection>/sql_dump.html として静的出力に含める。
+// .output/public/__nuxt_content/<collection>/sql_dump.txt（3.5 以前は sql_dump.html）として静的出力に含める。
 // コレクションの source が drafts/ を拾うと、ページから参照されていなくても
 // 本番サイトから下書き本文をダウンロードできてしまう（ADR 0004 改訂節）。
 //
@@ -21,8 +21,10 @@ const leaks = []
 let checked = 0
 
 for (const collection of readdirSync(root)) {
-  const file = join(root, collection, 'sql_dump.html')
-  if (!existsSync(file)) continue
+  const file = ['sql_dump.txt', 'sql_dump.html']
+    .map(name => join(root, collection, name))
+    .find(path => existsSync(path))
+  if (!file) continue
 
   const raw = readFileSync(file, 'utf-8').trim()
   let sql
@@ -48,7 +50,7 @@ for (const collection of readdirSync(root)) {
 }
 
 if (checked === 0) {
-  console.error('[check-drafts] sql_dump.html が 1 件も見つかりません')
+  console.error('[check-drafts] sql_dump.txt / sql_dump.html が 1 件も見つかりません')
   process.exit(1)
 }
 

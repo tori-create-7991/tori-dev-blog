@@ -22,7 +22,7 @@ GCP と GitHub があれば同じ構成を再現できる（[docs/setup/fork.md]
 
 | 層 | 技術 |
 |---|---|
-| サイト | Nuxt 3（全ページを事前生成）、@nuxt/content v3、@nuxt/ui、Tailwind CSS 4、Pinia、fuse.js |
+| サイト | Nuxt 4（全ページを事前生成）、@nuxt/content v3、@nuxt/ui v4、@nuxt/image、Tailwind CSS 4、fuse.js |
 | 配信 | Firebase Hosting（本番サイトと、PR ごとのプレビューチャネルを置く検証サイト） |
 | DNS | Cloudflare（DNS only） |
 | インフラ | Terraform 2 段構成（`terraform/bootstrap` は人がローカルで、`terraform/app` は CI が apply）。[ADR 0006](docs/adr/0006-two-stage-terraform.md) |

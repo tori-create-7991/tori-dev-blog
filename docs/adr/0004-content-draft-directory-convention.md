@@ -51,7 +51,7 @@ RSS・sitemap のいずれにも出現しない）。この挙動は `nuxt build
 
 上の Consequences で懸念していた「汎用 `content` コレクションが `drafts/` も拾う」問題は、
 使い始める前から実害があった。@nuxt/content v3 はページから参照されていないコレクションも
-SQL ダンプ（`/__nuxt_content/<collection>/sql_dump.html`）として静的出力に含めるため、
+SQL ダンプ（`/__nuxt_content/<collection>/sql_dump.html`。@nuxt/content 3.16 以降は `sql_dump.txt`）として静的出力に含めるため、
 `drafts/` に置いた `.md` は本番サイトからダウンロードできる状態だった（手元ビルドで確認）。
 また、このリポジトリは公開なので、git 管理下の下書きは push した時点でレビュー前に公開される
 （下書きを入れたブランチが PR として公開状態になっていた）。

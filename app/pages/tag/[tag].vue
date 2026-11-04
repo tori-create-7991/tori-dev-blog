@@ -11,7 +11,7 @@
                 v-for="tag in tags"
                 :key="tag"
                 :to="tagPath(tag)"
-                class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer dark:bg-gray-800"
+                class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer dark:bg-gray-800 dark:text-gray-200"
             >
                 {{ tag }}
             </NuxtLink>

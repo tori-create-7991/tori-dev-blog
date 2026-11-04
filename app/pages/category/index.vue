@@ -9,7 +9,7 @@
         v-for="category in categories"
         :key="category"
         :to="categoryPath(category)"
-        class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer dark:bg-gray-800"
+        class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm hover:bg-gray-200 cursor-pointer dark:bg-gray-800 dark:text-gray-200"
       >
         {{ category }}
       </NuxtLink>
